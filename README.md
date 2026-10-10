@@ -167,18 +167,34 @@ git push
 
 ### 部署到 GitHub Pages（只需要做一次）
 
-1. 在 GitHub 上新建一个仓库，**名字用英文**，比如 `knowledge-base`
+本项目的最终上线地址是：
+
+```text
+https://castoricelover777.github.io/blog/
+```
+
+1. 在 GitHub 上新建一个仓库，名字用英文 `blog`，选 **Public**
    （GitHub 的仓库名不支持中文，只允许字母、数字、`-`、`_`、`.`）；
-2. 本地执行（把 `你的用户名` 换成你自己的）：
+   **不要**勾选 "Add a README file" 等初始化选项，让仓库保持空的，否则 push 会冲突；
+2. 本地执行：
 
    ```bash
-   git remote add origin https://github.com/你的用户名/knowledge-base.git
+   git remote add origin https://github.com/castoricelover777/blog.git
    git push -u origin main
    ```
 
 3. 打开仓库页面 → **Settings** → 左边找到 **Pages** →
    Source 选 **Deploy from a branch**，Branch 选 **main**、目录选 **/(root)**，点 Save；
-4. 等一两分钟，网址就是 `https://你的用户名.github.io/knowledge-base/`。
+4. 等一两分钟，访问上面的网址。
+
+> **为什么这个项目用 "Deploy from a branch"，而不是 GitHub Actions？**
+> 你另一个仓库 `ai-class-review` 用的是 Actions（`.github/workflows/pages.yml`），
+> 那套东西适合有构建步骤的项目。本项目是纯静态的、根目录就是 `index.html`，
+> 没有任何需要"编译"的东西，所以 Git 分支直接发布就够了——**少一个 yml 文件，少一处可能出错的地方**。
+> 两种方式的效果完全一样。
+>
+> 想确认线上是不是真的活着，直接在浏览器打开那个网址；
+> 或者命令行执行 `curl -I https://castoricelover777.github.io/blog/` 看有没有返回 200。
 
 **注意**：GitHub Pages 是 **Linux** 服务器，而 Windows 不区分大小写。
 所以文件名和路径要严格一致（`app.js` 不能写成 `App.js`，`data/notes.json` 的目录名也别改）。
