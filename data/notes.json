@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1783785600002,
+    "date": "2026-07-12",
+    "title": "项目复盘：用原生 JS 写一个静态博客",
+    "category": "项目复盘",
+    "content": "# 项目复盘：用原生 JS 写一个静态博客\n\n## 目标\n\n做一个能放在 U 盘里、插到任何电脑双击就能看的个人博客：记录每日学习进度和项目复盘。\n技术栈限定为 **HTML5 + 原生 CSS3 + 原生 JavaScript**，Markdown 用 marked.js 在前端渲染。\n\n## 最终结构\n\n```text\nJavaBlog/\n├── index.html                    # 主页面\n├── css/\n│   ├── style.css                 # 站点样式\n│   └── github-dark.min.css       # 代码高亮主题\n├── js/\n│   ├── main.js                   # 全部逻辑\n│   └── lib/                      # 第三方库（本地，离线可用）\n├── logs/                         # 日志正文，一天一个 .md\n├── data/config.json              # 日志清单（日期/标题/路径）\n└── 启动博客.bat                  # 一键启动本地服务器\n```\n\n## 最大的坑：file:// 协议下 fetch 读不到文件\n\n一开始直接双击 `index.html`，页面全空白，F12 里报：\n\n```text\nAccess to fetch at 'file:///F:/JavaBlog/data/config.json'\nfrom origin 'null' has been blocked by CORS policy.\n```\n\n**原因**：`file://` 的 origin 是 `null`，浏览器禁止 JS 读取本地文件，\n这是同源策略，跟代码写得对不对没关系。\n\n**解决办法**：用一个本地静态服务器（本项目用 PowerShell 写的 60 行小服务器），\n通过 `http://127.0.0.1:8080/` 访问就正常了。\n\n## 收获\n\n1. `fetch` + `async/await` 读 JSON 和文本文件的写法；\n2. 事件委托：列表是动态渲染的，把点击事件绑在父元素 `ul` 上更不容易出错；\n3. 渲染用户内容前必须转义 HTML，否则一个 `<` 就能把页面结构搞乱；\n4. 用 CSS 变量统一管理主题色，换配色只改 `:root` 那一块。\n\n## 待改进\n\n- [ ] 给日志列表加个「按月归档」的分组\n- [ ] 加一个上一页/下一页的快捷键（`[` 和 `]`）\n- [ ] 用 Python 写个小脚本，扫描 `logs/` 自动生成 `config.json`，省得手写\n\n---\n*复盘时间：2026-07-12*\n"
+  },
+  {
+    "id": 1783699200001,
+    "date": "2026-07-11",
+    "title": "集合框架：ArrayList 与 LinkedList 的区别",
+    "category": "数据结构",
+    "content": "# 集合框架：ArrayList 与 LinkedList 的区别\n\n今天面经里被问到的问题，虽然是新生但先搞懂底层结构。\n\n## 一句话总结\n\n| | ArrayList | LinkedList |\n| --- | --- | --- |\n| 底层结构 | 动态数组 | 双向链表 |\n| 随机访问 `get(i)` | O(1) | O(n) |\n| 头部插入/删除 | O(n) | O(1) |\n| 内存占用 | 连续内存，可能浪费 | 每个节点多存两个指针 |\n| 线程安全 | 都不安全 | 都不安全 |\n\n## ArrayList 扩容\n\n默认容量 10，扩容为 `原容量 + 原容量 >> 1`，也就是大约 **1.5 倍**。\n\n```java\npublic static void main(String[] args) {\n    ArrayList<Integer> list = new ArrayList<>();   // 默认容量 10\n    for (int i = 0; i < 20; i++) {\n        list.add(i);\n    }\n    System.out.println(list.size());      // 20\n    System.out.println(list.get(0));      // 0\n}\n```\n\n已知数据量时最好指定容量，少几次扩容：\n\n```java\nList<String> names = new ArrayList<>(100);\n```\n\n## LinkedList 的适用场景\n\nLinkedList 实现了 `Deque`，可以当队列/栈用：\n\n```java\nLinkedList<String> queue = new LinkedList<>();\nqueue.addLast(\"第一个\");\nqueue.addLast(\"第二个\");\nSystem.out.println(queue.pollFirst());   // 第一个\n```\n\n## 实践中的选择\n\n> 实际开发里 **99% 用 ArrayList**：虽然 LinkedList 头尾插入是 O(1)，\n> 但随机访问太慢，而且每个节点都是独立对象，缓存不友好。\n\n## 今日疑问\n\n- `ArrayList` 的 `remove(int index)` 和 `remove(Object o)` 重载怎么区分？\n  → 传 `int` 走下标，传对象走 equals 匹配。\n- 为什么说 `Arrays.asList()` 返回的 List 不能 `add`？\n  → 它的底层是固定长度的数组，还没验证，明天写个小 demo 试试。\n\n---\n*耗时：约 3 小时｜状态：结构清楚了，源码还没读*\n"
+  },
+  {
+    "id": 1783612800000,
+    "date": "2026-07-10",
+    "title": "Java 基础：变量、数据类型与自动拆装箱",
+    "category": "Java 基础",
+    "content": "# Java 基础：变量、数据类型与自动拆装箱\n\n> 今天把《Java 核心技术》第 3 章过了一遍，重点整理了基本数据类型和包装类的坑。\n\n## 一、8 种基本数据类型\n\n| 类型 | 字节 | 取值范围 | 默认值 |\n| --- | --- | --- | --- |\n| `byte` | 1 | -128 ~ 127 | 0 |\n| `short` | 2 | -32768 ~ 32767 | 0 |\n| `int` | 4 | -2^31 ~ 2^31-1 | 0 |\n| `long` | 8 | -2^63 ~ 2^63-1 | 0L |\n| `float` | 4 | ±3.4E38 | 0.0f |\n| `double` | 8 | ±1.7E308 | 0.0d |\n| `char` | 2 | 0 ~ 65535 | '\\u0000' |\n| `boolean` | 1 | true / false | false |\n\n记忆点：**`long` 字面量要加 `L`，`float` 要加 `f`**，否则编译不过。\n\n```java\nlong big = 10000000000L;   // 不加 L 会被当成 int，直接报错\nfloat f = 3.14f;           // 不加 f 会被当成 double\n```\n\n## 二、自动装箱与拆箱\n\n```java\nInteger a = 100;    // 自动装箱：Integer.valueOf(100)\nint b = a;          // 自动拆箱：a.intValue()\n```\n\nInteger 缓存了 **-128 ~ 127**，这个区间内 `==` 比较是 `true`，超出就是 `false`：\n\n```java\nInteger x = 127, y = 127;\nSystem.out.println(x == y);        // true  —— 同一个缓存对象\n\nInteger m = 128, n = 128;\nSystem.out.println(m == n);        // false —— 两个不同的对象！\n\nSystem.out.println(m.equals(n));   // true  —— 比较值才靠谱\n```\n\n**结论：包装类比较必须用 `equals()`，`==` 只在基本类型上比较值。**\n\n## 三、今天踩的坑\n\n1. 拆箱时如果包装类是 `null`，会抛 `NullPointerException`：\n   ```java\n   Integer v = null;\n   int r = v;   // NullPointerException\n   ```\n2. `int` 除法会丢掉小数，`5 / 2 == 2`，要写成 `5 / 2.0`。\n\n## 四、明天计划\n\n- [x] 背下 8 种基本类型的字节数和范围\n- [ ] 写 3 个小例子验证 Integer 缓存\n- [ ] 开始看 String 的不可变性\n\n---\n*耗时：约 2.5 小时｜状态：基本掌握，缓存那块还要再写代码验证*\n"
+  }
+]
