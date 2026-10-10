@@ -223,6 +223,40 @@ https://castoricelover777.github.io/blog/
 > 想确认线上是不是真的活着，直接在浏览器打开那个网址；
 > 或者命令行执行 `curl -I https://castoricelover777.github.io/blog/` 看有没有返回 200。
 
+### ⚠️ 如果 `git push` 卡住或报 "Could not connect to server"
+
+**这是本机网络环境的问题，不是代码的问题。** 现象是这样：
+
+```text
+fatal: unable to access 'https://github.com/...': Failed to connect to github.com:443
+after 21077 ms: Could not connect to server
+```
+
+**原因**：这台电脑访问 GitHub 需要走代理（`127.0.0.1:7890`，由 `YueTuCore` 这个程序提供）。
+浏览器能打开 GitHub，是因为浏览器会自动读 Windows 的"系统代理"设置；
+但 **git 不会自动读**，它只会直连，于是被墙掉。
+
+**解决办法**：给 git 单独配一次代理（配一次就永久生效）：
+
+```bash
+git config --global http.proxy http://127.0.0.1:7890
+git config --global https.proxy http://127.0.0.1:7890
+```
+
+- 确认配好了：执行 `git config --global --get http.proxy`，
+  如果打印出 `http://127.0.0.1:7890` 就说明生效了；打印空白说明没配上；
+- **前提是代理软件正在运行**（任务栏里能看到它）。如果哪天你把代理软件关了，
+  git push 就会又连不上——这时候要么打开代理软件，要么用下面这条把代理设置临时取消：
+
+  ```bash
+  git config --global --unset http.proxy
+  git config --global --unset https.proxy
+  ```
+
+- 怎么判断代理端口是不是 7890：打开"Windows 设置 → 网络和 Internet → 代理"，
+  看"手动设置代理"里的地址和端口；或者执行
+  `Get-NetTCPConnection -LocalPort 7890 -State Listen` 看有没有程序在监听。
+
 **注意**：GitHub Pages 是 **Linux** 服务器，而 Windows 不区分大小写。
 所以文件名和路径要严格一致（`app.js` 不能写成 `App.js`，`data/notes.json` 的目录名也别改）。
 本项目已经按这个原则写好，正常不会出问题。
