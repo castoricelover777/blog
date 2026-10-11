@@ -97,48 +97,84 @@ let catsBox = document.getElementById('cats');        // 顶部那一行分类�
 //     这个函数在文件最下面被调用了一次（start();），也就是"打开页面就跑"。
 // ============================================================================
 
-function start() {
+var start = function() {
   // localStorage.getItem(KEY) 是"按名字取东西"。
   // 注意：取到的是**字符串**（当初存进去的 JSON 文本）；如果这个名字从来没存过，会返回 null。
-  let cache = localStorage.getItem(KEY);
+  var cache = localStorage.getItem(KEY);
 
+  // 先从缓存里拿一份"能立刻显示"的数据。
   // 判断"是不是 null"要用 != null，不能写 ==""，
-  // 因为空字符串 '' 和 null 不是一回事（虽然这里不会出现空字符串）。
+  // 因为空字符串 '' 和 null 不是一回事。
   if (cache != null) {
-    // 有缓存 —— 把 JSON 文本还原成数组。JSON.parse 就是 JSON.stringify 的逆操作。
-    notes = JSON.parse(cache);
+    try {
+      notes = JSON.parse(cache);
+    } catch (e) {
+      // 缓存坏了（比如被手改过），那就当没有缓存，下面会去读文件
+      notes = [];
+    }
+  }
 
-    // 排一下序，把左边列表和分类药丸画出来，然后 return（直接结束这个函数，不再往下走）。
+  if (notes.length > 0) {
+    // 有缓存：先立刻显示出来，页面不会白屏
     sortNotes();
     showCats();
     showList();
-    return;
   }
 
-  // 走到这里说明缓存是空的：要么是你第一次打开，要么是换了电脑/清了浏览器数据。
-  // 那就去读磁盘上的文件。fetch 是"发一个请求把文件取过来"，
-  // 它是**异步**的（要等一会儿），所以不能写 "let data = fetch(...)" 直接拿结果，
-  // 而是用 .then(...) 告诉它："等你取回来了，再执行这里的代码"。
-  fetch('data/notes.json')
-    // 第一个 .then：请求成功了，res 是"响应对象"。res.json() 表示把响应体按 JSON 解析，
-    // 它返回的还是"等待中的结果"，所以下面还要再来一个 .then 去接。
+  // ★ 关键一步：不管有没有缓存，都再去问一下服务器"文件里的数据是什么版本"。
+  //   为什么要这么做：
+  //     以前是"有缓存就永远用缓存"，结果我在电脑上导入了几十条新笔记、
+  //     浏览器里还是几十天前的老数据，非得手动按 F12 清缓存才看得到最新内容。
+  //     现在改成：缓存只负责"先显示出来"，文件才是"最终依据"——
+  //     一发现文件里有更新的数据，就自动换成文件里的。
+  //   怎么判断"更新"：比较两边最新的那条笔记的 created（精确到分钟的时间）。
+  //     文件里的更新 → 用文件；两边一样或缓存更新 → 保留缓存。
+  //     这样打开页面永远能看到文件里的最新数据，同时"没存过的本地改动"也不会被冲掉。
+  fetch('data/notes.json?ts=' + Date.now())
     .then(function (res) { return res.json(); })
-    // 第二个 .then：这时候 data 才是真正的数组了。
-    .then(function (data) {
-      notes = data;      // 放进全局数组
-      sortNotes();       // 按日期从新到旧排
-      saveCache();       // 顺手存一份到浏览器缓存，下次打开就不用再读文件了
-      showCats();        // 收集分类，画顶部的分类药丸
-      showList();        // 画左边列表
+    .then(function (fileNotes) {
+      // 服务器返回的数据必须是数组，否则当它无效（防止把坏数据用上）
+      if (fileNotes == null || fileNotes.length == null) {
+        return;
+      }
+
+      if (notes.length == 0) {
+        // 本来就没数据（第一次打开 / 清了缓存），直接用文件，并记住到缓存
+        notes = fileNotes;
+        sortNotes();
+        saveCache();
+        showCats();
+        showList();
+        return;
+      }
+
+      // 两边都有数据：比一下谁更新
+      var fileStamp = newestStamp(fileNotes);
+      var cacheStamp = newestStamp(notes);
+
+      if (fileStamp > cacheStamp) {
+        notes = fileNotes;
+        sortNotes();
+        saveCache();
+        showCats();
+        showList();
+        alert('已自动同步：data/notes.json 里有更新的数据（' + fileNotes.length + ' 条），' +
+              '已换成文件里的最新版本。\n\n' +
+              '（你以前在这个地址下改过、但没点过【💾 保存到文件】的内容，可能会被覆盖——' +
+              '所以改完记得点保存。）');
+      }
+      // fileStamp <= cacheStamp：什么都不做，继续用缓存
     })
-    // .catch 是"上面任何一步出错了就执行这里"。
-    // 最常见的出错原因：直接双击 index.html 打开（file:// 协议），
-    // 浏览器出于安全策略不允许 JS 读本地文件，fetch 会被拦下来。详见 README。
     .catch(function () {
-      contentBox.innerHTML = '<p>读不到 data/notes.json。请用「启动知识库.bat」' +
-        '打开本页面，而不是直接双击 index.html。</p>';
+      // 拿不到文件（服务器没开、或者直接双击 index.html 打开）——
+      // 这时候缓存就是唯一的依靠，页面照常能用。
+      // 如果连缓存也没有，就给一句提示（这种情况就是"两者都没有"）。
+      if (notes.length == 0) {
+        contentBox.innerHTML = '<p>读不到 data/notes.json。请用「启动知识库.bat」' +
+          '打开本页面，而不是直接双击 index.html。</p>';
+      }
     });
-}
+};
 
 // ============================================================================
 // 三、刷新左边的归档列表
@@ -643,13 +679,88 @@ function saveCache() {
   localStorage.setItem(KEY, JSON.stringify(notes));
 }
 
-// 按日期从新到旧排序。
-// sort 需要一个"比较函数"来告诉它谁前谁后：
-//   返回负数 -> a 排前面；返回正数 -> b 排前面。
-// 这里 a.date < b.date 说明 a 更早，那就返回 1（让 b 排前面），于是就成了"新的在前"。
-// 日期写成 2026-07-10 这种格式有个好处：直接比字符串大小，结果和比日期是一样的。
+// 取出一堆笔记里"最新的时间戳"（created 字段，形如 '2026-10-06 10:29'）。
+// 用途：判断"文件里的数据"和"浏览器缓存里的数据"哪个更新——见 start() 和 reloadFromFile()。
+// 没有 created 字段的老数据会被当成空字符串（比任何日期都小），所以不会被误判成"更新"。
+function newestStamp(list) {
+  var max = '';
+  if (list == null) { return max; }
+  for (var i = 0; i < list.length; i++) {
+    var c = list[i].created;
+    if (c == null) { c = ''; }
+    if (c > max) { max = c; }
+  }
+  return max;
+}
+
+// 判断一个东西是不是"笔记数组"（至少得是能用的数组）。
+// 为什么需要：从服务器读回来的东西可能是坏数据，用之前先验一下，免得页面被搞乱。
+function looksLikeNotes(data) {
+  if (data == null) { return false; }
+  if (typeof data.length != 'number') { return false; }   // 没有 length，不是数组
+  if (data.length > 0 && typeof data[0] != 'object') { return false; }   // 第一个不是对象
+  return true;
+}
+
+// 【🔄 重新加载】按钮：手动把 data/notes.json 的数据重新读一遍，覆盖浏览器缓存。
+// 什么时候用：
+//   · 你在外面改了 notes.json（比如 git pull 下来别人的更新），想立刻看到；
+//   · 或者缓存和文件"打架"了，想强制以文件为准。
+// 和 start() 里那个"自动同步"的关系：自动同步比较的是"最新的那条的时间"，
+// 所以"只改了老笔记的内容（没有新增笔记）"这种情况它发现不了——这时候就用这个按钮。
+function reloadFromFile() {
+  if (!confirm('确定要从 data/notes.json 重新加载吗？\n\n' +
+               '浏览器缓存里的内容会被文件里的数据覆盖。\n' +
+               '（如果你在网页上改过东西但没点过【💾 保存到文件】，那些改动会丢）')) {
+    return;
+  }
+
+  // 请求里加一个时间戳参数：让浏览器"不要用缓存"，每次都真的去问服务器要最新文件
+  fetch('data/notes.json?ts=' + Date.now())
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (!looksLikeNotes(data)) {
+        alert('data/notes.json 的内容看起来不对（不是笔记数组），已取消加载。');
+        return;
+      }
+      notes = data;
+      sortNotes();
+      saveCache();
+      showCats();
+      showList();
+      showNote(notes[0].id);     // 直接打开最新那一条
+      alert('已重新加载 data/notes.json，共 ' + notes.length + ' 条。');
+    })
+    .catch(function () {
+      alert('读不到 data/notes.json。\n\n请确认：\n' +
+            '  1. 是用「启动知识库.bat」打开的（不是直接双击 index.html）；\n' +
+            '  2. 那个黑色命令行窗口还开着（服务器没关）。');
+    });
+}
+
+// 排序规则（两条，注意它们方向不一样）：
+//   1) 不同日期：新的在上面（09-12 排在 08-25 上面）——方便你打开页面先看到最近写的；
+//   2) 同一天内：早的在上面（同一天的 day1 排在 day2 上面）——这样当天的时间线是顺着读的，
+//      不会出现"一整天里最上面那条的进度数字反而更大"这种看起来像倒退的情况。
+//
+// 为什么需要 created 字段：date 只精确到"天"，同一天的多条记录在只比日期时是"相等"的，
+//   顺序不确定，就会出现上面说的怪现象。
+// created 形如 '2026-08-25 16:43'，是固定格式，所以直接比字符串大小就等于比时间先后。
+//
+// 老数据没有 created 字段，所以这里做了兜底：没有 created 就用 date 代替，
+// 这样即使你手改 notes.json 漏了这个字段，页面也不会乱。
 function sortNotes() {
-  notes.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  notes.sort(function (a, b) {
+    let ta = a.created;
+    let tb = b.created;
+    if (ta == null) { ta = a.date; }   // 兜底：没写 created 就用日期
+    if (tb == null) { tb = b.date; }
+
+    if (a.date != b.date) {
+      return a.date < b.date ? 1 : -1;   // 规则 1：不同日期，新的在上面
+    }
+    return ta < tb ? -1 : 1;             // 规则 2：同一天，早的在上面
+  });
 }
 
 // 按 id 找这条记录在数组里是第几个，找不到返回 -1。
