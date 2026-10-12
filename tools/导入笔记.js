@@ -104,26 +104,37 @@ for (let i = 0; i < blocks.length; i++) {
   let category = mCat ? mCat[1].trim() : '';
 
   // ---- 自动分类：按标题里的关键字覆盖草稿里写的分类 ----
-  // 为什么需要：学习是分阶段的（理论课 → 刷题 → 数据结构），
+  // 为什么需要：学习是分阶段的（理论课 → 刷题 → 数据结构 → 项目），
   // 如果所有笔记都挤在同一个分类里，顶部的分类药丸就失去意义了。
   // 这里按标题关键字自动分流，草稿里就不用每次手写分类。
-  // 想看全部规则：改下面这几行即可（左边的字出现在标题里，就用右边的分类）。
-  // ⚠️ 判断顺序很重要：越"具体"的规则要写在越前面。
-  //    例如"Java 项目实战：FightGame"同时含"项目"和"Java"，
-  //    如果"项目"不写在前面，它就会被归到 Java 类里去。
-  if (title.indexOf('项目') >= 0) {
-    category = '项目';
-  } else if (title.indexOf('阶段总结') >= 0) {
+  //
+  // 三条要注意的规则（都是踩过坑总结的）：
+  //   ① 越"具体"的判断越要写在前面。例如"Java 项目实战"同时含"项目实战"和"Java"，
+  //      先判 Java 就会被归错类。
+  //   ② 关键字要写到"不会误伤"为止。我一开始把项目类的关键字写成"项目"两个字，
+  //      结果"Java day1：项目导向开新坑"也被归成了项目类——因为它正文里有"项目"。
+  //      所以现在写成"项目实战"，精确得多。
+  //   ③ 先把标题转成小写（t）再比英文关键字，这样 Java / java / JAVA 都能认。
+  //      我最初忘了转小写，导致"jawaweb(18/200)"这种标题一个关键字都匹配不上，
+  //      直接被判成"没有分类"。
+  //   ④ 一条都没匹配上时，**保留草稿里写的分类**（category 不清空），
+  //      避免把原来正确的分类覆盖成空。
+  const t = title.toLowerCase();
+  if (title.indexOf('阶段总结') >= 0) {
     category = '项目复盘';
+  } else if (title.indexOf('项目实战') >= 0) {
+    category = '项目';
   } else if (title.indexOf('牛客刷题') >= 0) {
     category = 'C语言刷题';
   } else if (title.indexOf('数据结构') >= 0) {
     category = '数据结构';
-  } else if (title.indexOf('JavaWeb') >= 0) {
-    // ⚠️ 这条也必须写在判断"Java"的前面：
-    //    "JavaWeb" 里也含 "Java"，如果先判 Java 就会被归错类。
+  } else if (t.indexOf('javaweb') >= 0 || t.indexOf('jawaweb') >= 0) {
+    // ⚠️ 写在 Java 前面：javaweb 里也含 java。
+    //    "jawaweb" 是手误拼法，但既然标题里真的出现过，就一起兼容掉。
     category = 'JavaWeb';
-  } else if (title.indexOf('Java') >= 0 || title.indexOf('java') >= 0) {
+  } else if (title.indexOf('C语言') >= 0 || title.indexOf('c语言') >= 0) {
+    category = 'C语言';
+  } else if (t.indexOf('java') >= 0) {
     category = 'Java';
   }
 
