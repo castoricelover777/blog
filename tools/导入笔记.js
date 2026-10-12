@@ -108,18 +108,23 @@ for (let i = 0; i < blocks.length; i++) {
   // 如果所有笔记都挤在同一个分类里，顶部的分类药丸就失去意义了。
   // 这里按标题关键字自动分流，草稿里就不用每次手写分类。
   // 想看全部规则：改下面这几行即可（左边的字出现在标题里，就用右边的分类）。
-  if (title.indexOf('牛客刷题') >= 0) {
+  // ⚠️ 判断顺序很重要：越"具体"的规则要写在越前面。
+  //    例如"Java 项目实战：FightGame"同时含"项目"和"Java"，
+  //    如果"项目"不写在前面，它就会被归到 Java 类里去。
+  if (title.indexOf('项目') >= 0) {
+    category = '项目';
+  } else if (title.indexOf('阶段总结') >= 0) {
+    category = '项目复盘';
+  } else if (title.indexOf('牛客刷题') >= 0) {
     category = 'C语言刷题';
   } else if (title.indexOf('数据结构') >= 0) {
     category = '数据结构';
   } else if (title.indexOf('JavaWeb') >= 0) {
-    // ⚠️ 这条必须写在判断"Java"的前面：
+    // ⚠️ 这条也必须写在判断"Java"的前面：
     //    "JavaWeb" 里也含 "Java"，如果先判 Java 就会被归错类。
     category = 'JavaWeb';
   } else if (title.indexOf('Java') >= 0 || title.indexOf('java') >= 0) {
     category = 'Java';
-  } else if (title.indexOf('阶段总结') >= 0) {
-    category = '项目复盘';
   }
 
   if (!mBody) {
