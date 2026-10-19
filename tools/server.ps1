@@ -49,8 +49,10 @@ $ErrorActionPreference = 'Stop'
 # $PSScriptRoot 是"本脚本所在目录"，也就是 <项目>\tools
 # Split-Path -Parent 取它的上一层，得到项目根目录，所以 U 盘盘符变了也不受影响。
 $Root        = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
-$NotesPath   = Join-Path $Root 'data\notes.json'        # 数据文件
-$NotesBackup = Join-Path $Root 'data\notes.json.bak'    # 写入前的自动备份
+# 站点源码放在 Maven 标准目录 src\main\webapp 下，浏览器只从这里取文件。
+$WebRoot     = Join-Path $Root 'src\main\webapp'
+$NotesPath   = Join-Path $WebRoot 'data\notes.json'     # 数据文件（站点要读，所以放 webapp 里）
+$NotesBackup = Join-Path $Root 'notes\notes.json.bak'   # 写入前的自动备份（工作文件，不发布）
 # 请求体大小上限：8 MB。一个纯文本知识库远远用不到这么大，超过就拒绝，防止有人乱发大文件。
 $MaxBodyBytes = 8 * 1024 * 1024
 
@@ -333,13 +335,13 @@ function Serve-File {
   # 把网址路径拼成本机文件路径。
   # 网址里用 / 分隔，Windows 文件系统用 \ 分隔，所以要替换一下。
   $relative = $pathPart.TrimStart('/').Replace('/', [System.IO.Path]::DirectorySeparatorChar)
-  $full = [System.IO.Path]::GetFullPath((Join-Path $Root $relative))
+  $full = [System.IO.Path]::GetFullPath((Join-Path $WebRoot $relative))
 
-  # 安全防线：拼出来的路径必须还在项目目录里面。
+  # 安全防线：拼出来的路径必须还在站点目录里面。
   # 否则别人可以用 http://127.0.0.1:8080/../../Windows/win.ini 这样的地址
   # 去读你电脑上的任意文件（这叫"目录穿越"）。GetFullPath 会把 .. 展开成真实路径，
-  # 展开后如果不在项目目录里，就直接 403 拒绝。
-  if (-not $full.StartsWith($Root, [System.StringComparison]::OrdinalIgnoreCase)) {
+  # 展开后如果不在站点目录里，就直接 403 拒绝。
+  if (-not $full.StartsWith($WebRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
     Send-Text -Stream $Stream -StatusCode 403 -StatusText 'Forbidden' -Text 'Forbidden.'
     Write-Host ('  403  ' + $pathPart) -ForegroundColor Red
     return
@@ -433,7 +435,7 @@ Write-Host ""
 Write-Host "  ==================================================" -ForegroundColor Green
 Write-Host "   Personal knowledge base - local server running" -ForegroundColor Green
 Write-Host "  ==================================================" -ForegroundColor Green
-Write-Host "   Root  : $Root"
+Write-Host "   Web   : $WebRoot"
 Write-Host "   Notes : $NotesPath"
 Write-Host "   URL   : $Url"
 Write-Host "   Stop  : close this window (or press Ctrl+C)"

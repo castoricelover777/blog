@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ==========================================================================
+     pom.xml —— Maven 工程清单
+     ==========================================================================
+     【这个工程是什么】
+       一个"纯静态"的 Maven Web 工程：没有一行 Java 代码，
+       src/main/webapp/ 下的 HTML / CSS / JS / JSON 就是全部源码。
+
+     【为什么静态站也要 pom.xml】
+       为了用 Maven 标准的工程结构（src/main/webapp）和标准命令来打包：
+         mvn package    -> 生成 target/blog.war，同时把站点展开到 docs/
+       除此之外它不做任何事（不编译 Java，因为没有 Java 代码）。
+
+     【关键目录】
+       src/main/webapp/   ← 站点源码（Maven 标准的 Web 资源目录）
+       docs/              ← 构建产物：mvn package 自动展开到这里，
+                            因为 GitHub Pages 只能从仓库根目录或 /docs 发布。
+                            ⚠️ 不要手改 docs/，改 src/main/webapp/。
+
+     【packaging = war 是什么意思】
+       jar 是"给 JVM 跑的压缩包"，war 是"给 Web 服务器（如 Tomcat）跑的压缩包"。
+       我们的站点是纯静态资源，塞进 war 里也能直接丢给 Tomcat 用。
+     ========================================================================== -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- 坐标：groupId（组织）+ artifactId（模块）+ version（版本），三者唯一确定这个工程 -->
+  <groupId>com.castoricelover</groupId>
+  <artifactId>blog</artifactId>
+  <version>1.0.0</version>
+  <packaging>war</packaging>
+
+  <name>杨子颉的知识库</name>
+  <description>个人全科学习知识库（纯静态站点，Maven 标准 Web 工程结构）</description>
+
+  <properties>
+    <!-- 源码一律 UTF-8，避免中文乱码 -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- 本工程没有 Java 代码，但把编译目标写清楚，以后加 Java 不用改 -->
+    <maven.compiler.release>17</maven.compiler.release>
+  </properties>
+
+  <build>
+    <!-- 打出来的包叫 blog.war（不写就是 blog-1.0.0.war，不好看） -->
+    <finalName>blog</finalName>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>3.4.0</version>
+        <configuration>
+          <!-- warSourceDirectory 默认就是 src/main/webapp，这里不写 -->
+          <!-- 老式 war 工程要求有 WEB-INF/web.xml，我们是纯静态站点，没有也不需要，
+               必须显式关掉这个检查，否则打包会报 "webxml attribute is required" -->
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

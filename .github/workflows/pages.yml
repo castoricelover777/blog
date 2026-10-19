@@ -1,0 +1,55 @@
+# ============================================================================
+#  GitHub Pages 发布工作流
+# ============================================================================
+#  【为什么需要这个文件】
+#    站点源码现在放在 Maven 标准目录 src/main/webapp/ 下，
+#    而 GitHub Pages 的"分支发布"只能从仓库根目录或 /docs 目录取文件，
+#    取不到 src/main/webapp。所以改用"GitHub Actions 发布"：
+#    每次 push 到 main，它就自动把这个目录当成网站发布出去。
+#
+#  【要改的只有一处设置（在 GitHub 网页上）】
+#    Settings -> Pages -> Build and deployment -> Source 选 "GitHub Actions"
+#
+#  【它做什么】
+#    1) checkout：把仓库拉下来
+#    2) upload-pages-artifact：把 src/main/webapp 打包成"网站产物"
+#    3) deploy-pages：发布到 GitHub Pages
+#
+#  【为什么不用 mvn package】
+#    发布只需要静态文件，直接上传 src/main/webapp 就够了。
+#    mvn package 是给"想打 war 包丢给 Tomcat"的场景用的，和发布无关。
+# ============================================================================
+name: Deploy blog to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # 也可以在 Actions 页面手动点一下运行
+
+permissions:
+  contents: read            # 读仓库
+  pages: write              # 写 Pages
+  id-token: write           # 发布时要用 OIDC 令牌
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 拉取仓库
+        uses: actions/checkout@v4
+
+      - name: 打包站点产物（只取 src/main/webapp）
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: src/main/webapp
+
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

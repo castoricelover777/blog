@@ -1,0 +1,268 @@
+/* ==========================================================================
+   style.css —— 这个知识库的全部样式
+   ==========================================================================
+   【为什么单独拆出来】
+     以前样式是内联在 index.html 的 <style> 里的。拆出来的好处：
+       1) index.html 只剩"结构"（页面有哪些块），style.css 只管"长相"；
+       2) 浏览器能缓存 css 文件，第二次打开更快；
+       3) 改配色只改这一个文件，不用在几百行 HTML 里翻。
+
+   【怎么用】
+     index.html 的 <head> 里只有一行：
+       <link rel="stylesheet" href="css/style.css">
+     rel="stylesheet" 表示"这是样式表"，href 是位置（相对 index.html）。
+
+   【改配色只看这里】
+     底色 #0d1117  文字 #e6edf3  次要文字 #8b949e
+     边框 #30363d  高亮蓝 #58a6ff  选中蓝 #1f6feb
+   ========================================================================== */
+
+  /* ======================================================================
+     样式（CSS）：决定每个元素长什么样、摆在哪儿
+     ======================================================================
+     【CSS 是什么】
+       每条规则长这样：  选择器 { 属性: 值; }
+         · 选择器决定"改谁"：body 是整页，#list 是 id="list" 的元素，
+           button 是所有按钮，.md h1 是"class 为 md 的元素里面的 h1"
+         · 属性:值 决定"怎么改"：color 文字色、padding 内边距、display 怎么排布
+     【本项目只用了最基础的三样】
+       · 颜色和间距
+       · display:flex —— 弹性布局，用来做"左右两栏"和"按钮靠右"
+       · @media —— 媒体查询，屏幕窄的时候换一套排版（这就是手机适配）
+     ====================================================================== */
+
+  /* box-sizing: border-box 让"宽度"包含内边距和边框。
+     不设的话，一个 width:100% 再加 padding 就会超出容器。
+     * 表示"所有元素"，放在最前面统一设定，能省掉很多麻烦。 */
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;                    /* 浏览器默认给 body 加了 8px 外边距，去掉 */
+    background: #0d1117;          /* 底色：深灰蓝（想换配色改这里） */
+    color: #e6edf3;               /* 文字色：近白（想换配色改这里） */
+    /* font 是简写：字号 15px / 行高 1.7 / 字体列表。
+       字体列表从左往右找，找不到就用下一个，最后兜底 sans-serif（无衬线）。 */
+    font: 15px/1.7 system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
+  }
+
+  /* ---------- 顶部工具栏 ---------- */
+  header {
+    display: flex;                /* 让里面的元素横向排成一行 */
+    align-items: center;          /* 在竖直方向上居中对齐 */
+    flex-wrap: wrap;              /* 一行放不下时允许换行（手机上很有用） */
+    gap: 10px;                    /* 元素之间的间距 */
+    padding: 10px 16px;
+    border-bottom: 1px solid #30363d;   /* 一条分隔线：1像素实线 */
+  }
+  /* header 里的 h1（标题）用 flex:1 占满剩余空间，
+     这样它后面的按钮就会被挤到最右边。 */
+  header h1 { flex: 1; margin: 0; font-size: 16px; }
+  /* 标题后面那半句"大一全科学习轨迹"，字号小一点、灰一点，
+     起个副标题的作用，不抢主标题的视线。 */
+  header h1 .sub { font-size: 12px; font-weight: 400; color: #8b949e; }
+
+  /* 搜索框 */
+  #search {
+    width: 200px;
+    padding: 6px 10px;
+    font-size: 13px;
+    color: #e6edf3;               /* 输入的文字 */
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    outline: none;                /* 去掉浏览器默认的蓝色描边 */
+  }
+  /* ::placeholder 是"输入框里的灰色提示文字"。
+     Chrome / Edge 用 ::placeholder，老式写法是 ::-webkit-input-placeholder。 */
+  #search::placeholder { color: #8b949e; }
+  #search:focus { border-color: #58a6ff; }   /* 光标点进去时边框变蓝，提示"正在输入" */
+
+  button {
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #e6edf3;
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 6px;           /* 圆角 */
+    cursor: pointer;              /* 鼠标移上去变成小手，表示可以点 */
+  }
+  button:hover { background: #30363d; }   /* :hover 是"鼠标悬停时" */
+
+  /* ---------- 分类筛选条 ---------- */
+  /* 这是 header 里单独的一整行，所以用 width:100% 强制它独占一行。 */
+  #cats {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    font-size: 12px;
+    color: #8b949e;
+  }
+  /* 分类筛选条里的每一个按钮都是一颗"小药丸" */
+  #cats span.cat, #cats span.cat-active {
+    padding: 2px 10px;
+    font-size: 12px;
+    border: 1px solid #30363d;
+    border-radius: 999px;         /* 足够大的圆角 = 药丸形状 */
+    cursor: pointer;
+  }
+  #cats span.cat:hover { background: #21262d; }
+  /* 被选中的那个分类：蓝底，一眼看出"现在正在筛选这个分类" */
+  #cats span.cat-active {
+    color: #ffffff;
+    background: #1f6feb;
+    border-color: #1f6feb;
+  }
+
+  /* 当前筛选状态的文字说明（"共 3 条 / 筛出 2 条"）。
+     flex:1 让它吃掉这一行剩下的空间，于是就被推到了最右边（和 .grow 一个道理）。
+     这一句在 app.js 里是动态加上的。 */
+  #tips { flex: 1; text-align: right; white-space: nowrap; }
+
+  /* ---------- 主体：左边列表 + 右边内容 ---------- */
+  /* height 用 calc(100vh - 99px)：100vh 是"整个窗口高度"，
+     减去顶部工具栏的高度，剩下的就是主体高度。
+     这样主体内部可以各自滚动（列表长了滚列表，正文长了滚正文），
+     而不用整页滚动。 */
+  main { display: flex; height: calc(100vh - 99px); }
+
+  /* 左边列表 */
+  #list {
+    width: 280px;                 /* 固定宽度 */
+    margin: 0;                    /* ul 默认有外边距和缩进，去掉 */
+    padding: 8px;
+    list-style: none;             /* 去掉每一行前面那个小圆点 */
+    overflow-y: auto;             /* 内容超出高度时出现竖向滚动条 */
+    background: #161b22;          /* 比底色稍亮一点，区分出"侧栏"的感觉 */
+    border-right: 1px solid #30363d;
+  }
+
+  /* 归档分组：一个月一块，用 <li class="group"> 表示 */
+  #list li.group {
+    padding: 0;
+    margin-bottom: 6px;
+    cursor: default;              /* 月份标题本身不是"一条笔记"，不给小手 */
+  }
+  /* 月份标题那一行（▼ 2026 年 7 月 · 2 条），可以点，用来折叠/展开 */
+  #list .group-head {
+    padding: 4px 6px;
+    font-size: 12px;
+    color: #8b949e;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;            /* 双击时不要选中文字，不然看起来像选中了一大块 */
+  }
+  #list .group-head:hover { background: #21262d; color: #e6edf3; }
+  /* 小三角用等宽字体，保证 ▼ 和 ▶ 宽度一样，折叠时标题不会左右抖动 */
+  #list .group-head b { font-family: monospace; font-weight: 400; }
+  #list .group-count { font-size: 11px; color: #6e7681; }
+
+  /* 分组里的一条笔记：左边空出 14px，看起来是"缩进在月份下面" */
+  #list li.note {
+    padding: 6px 8px 6px 14px;
+    margin-bottom: 2px;
+    font-size: 13px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #list li.note:hover { background: #21262d; }   /* 鼠标划过某一条时高亮 */
+  /* 当前正在看的那一条：左边一条蓝色竖线，方便一眼找到 */
+  #list li.active {
+    background: #21262d;
+    box-shadow: inset 3px 0 0 #58a6ff;
+  }
+  /* #list .day 就是每一条前面的日期（app.js 里用 <b class="day"> 包的）。
+     display:inline-block + 固定宽度，让所有标题左边对齐。 */
+  #list .day {
+    display: inline-block;
+    width: 42px;
+    font: 11px monospace;         /* 等宽字体，数字对齐好看 */
+    font-weight: 400;             /* b 标签默认是粗体，改回正常粗细 */
+    color: #6e7681;
+  }
+  #list .cat-tag { font-size: 11px; color: #58a6ff; }   /* 分类标签：蓝色 */
+  /* 关键词高亮：搜索命中的那几个字，黄底黑字 */
+  #list mark {
+    padding: 0 2px;
+    color: #0d1117;
+    background: #ffd33d;
+    border-radius: 2px;
+  }
+  #list li.empty { color: #8b949e; cursor: default; }  /* 空列表时的提示行，不可点 */
+
+  /* 折叠：加上 .collapsed 这个 class 的元素直接不显示。
+     这是最省事的"折叠"做法——只在 class 上切换，不改数据结构。 */
+  #list .collapsed { display: none; }
+
+  /* 右边正文区 */
+  #content { flex: 1; padding: 24px 32px; overflow-y: auto; }
+  /* flex:1 的意思是"把剩下的横向空间全给我"，所以它自动填满右侧 */
+
+  /* ---------- 正文顶部那一行：分类 / 日期 / 编辑 / 删除 ---------- */
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #30363d;
+  }
+  .bar span { font-size: 12px; color: #8b949e; }
+  /* app.js 在中间放了一个空的 <span class="grow">，
+     用 flex:1 把后面的两个按钮推到最右边。这是最省事的"靠右对齐"办法。 */
+  .bar .grow { flex: 1; }
+
+  /* ---------- Markdown 正文的基本排版 ----------
+     app.js 把渲染结果放在 <div class="md"> 里，
+     .md xxx 表示"只改这个 div 里面的 xxx"，不会影响别处。 */
+  .md h1, .md h2 { padding-bottom: 6px; border-bottom: 1px solid #30363d; }
+
+  /* 行内代码：像 `这样` 包起来的那种，给个浅色底 */
+  .md code {
+    padding: 2px 5px;
+    font: 13px monospace;
+    background: #2d333b;
+    border-radius: 4px;
+  }
+
+  /* 代码块：三个反引号包起来的多行代码 */
+  .md pre {
+    padding: 12px;
+    overflow-x: auto;             /* 代码太长时横向滚动，不撑破页面 */
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+  }
+  /* 代码块内部的 <code> 不要再套一层底色和圆角，否则会重影 */
+  .md pre code { padding: 0; background: none; }
+
+  /* 引用：> 开头的那种 */
+  .md blockquote {
+    margin: 0 0 14px;
+    padding: 2px 14px;
+    color: #8b949e;
+    border-left: 3px solid #30363d;   /* 左边一条竖线 */
+  }
+
+  /* 表格 */
+  .md table { border-collapse: collapse; }   /* 合并相邻边框，不然是双线 */
+  .md th, .md td { padding: 6px 10px; border: 1px solid #30363d; }
+
+  .md img { max-width: 100%; }               /* 图片最宽不超过容器，避免溢出 */
+
+  /* ---------- 手机上：列表在上面，内容在下面 ----------
+     @media (max-width: 700px) 的意思是"屏幕宽度不超过 700px 时，用下面这套规则"。
+     手机上左右分栏太挤，所以改成上下排列。 */
+  @media (max-width: 700px) {
+    main { flex-direction: column; height: auto; }   /* 改成竖着排，高度自动 */
+    #list {
+      width: auto;                 /* 不再固定宽度，占满整行 */
+      max-height: 40vh;            /* 最多占屏幕高度的 40%，剩下的留给正文 */
+      border-right: 0;             /* 右侧那条线不需要了，改成下面一条 */
+      border-bottom: 1px solid #30363d;
+    }
+    #content { padding: 16px; }    /* 手机上边距小一点，多留点地方给文字 */
+    header h1 { flex: 1 1 100%; }  /* 标题独占一行，别和按钮挤在一起 */
+    #search { flex: 1; width: auto; }   /* 搜索框自动拉宽，把整行填满 */
+  }

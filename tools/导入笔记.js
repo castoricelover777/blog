@@ -38,13 +38,15 @@ const path = require('path');
 
 // ---- 项目路径（用脚本自己的位置推算，这样从哪儿运行都不会错）----
 const ROOT = path.resolve(__dirname, '..');
-const NOTES = path.join(ROOT, 'data', 'notes.json');
-const BACKUP = path.join(ROOT, 'data', 'notes.json.bak');
+// 站点数据在 Maven 标准目录 src/main/webapp/data 下（页面要 fetch 它）
+const NOTES = path.join(ROOT, 'src', 'main', 'webapp', 'data', 'notes.json');
+// 备份属于"工作文件"，放 notes/，不进站点、不发布
+const BACKUP = path.join(ROOT, 'notes', 'notes.json.bak');
 
 // ---- 要处理哪个草稿文件：用命令行参数，没给就用默认 ----
 let draftPath = process.argv[2];
 if (!draftPath) {
-  draftPath = path.join(ROOT, 'data', '_待导入_第一批_C语言day1-3.md');
+  draftPath = path.join(ROOT, 'notes', '_待导入_第一批_C语言day1-3.md');
 } else if (!path.isAbsolute(draftPath)) {
   draftPath = path.join(ROOT, draftPath);
 }

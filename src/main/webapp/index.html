@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!-- ==========================================================================
+     index.html —— 页面骨架（只有结构，没有样式、没有逻辑）
+     ==========================================================================
+     【在工程里的位置】
+       这是 Maven 标准 Web 工程的站点入口：
+         src/main/webapp/index.html   ← 本文件
+       同一目录下还有：
+         css/style.css   全部样式
+         js/app.js       全部逻辑
+         js/lib/marked.min.js  第三方 Markdown 渲染库
+         data/notes.json 笔记数据
+
+     【这个文件干什么】
+       只负责"页面有哪些块"，不负责长什么样（那是 css/style.css），
+       也不负责怎么动（那是 js/app.js）。
+       页面从上到下就三块：
+         1) <header>  顶部工具栏：标题 + 搜索框 + 分类筛选条 + 四个按钮
+         2) <main>    主体，左右两栏：左边 <ul> 归档列表，右边 <div> 内容
+         3) <script>  引入 marked.js（Markdown 渲染库）和 app.js（自己的逻辑）
+
+     【几个 HTML 标签】
+       <!DOCTYPE html>     告诉浏览器"这是 HTML5 文档"
+       <html lang="zh-CN"> 根元素，lang 说明页面语言是中文
+       <head>              放"给浏览器看"的信息（编码、标题、样式），不显示在页面上
+       <meta charset>      声明文件用 UTF-8 编码，否则中文会乱码
+       <meta viewport>     手机上按屏幕宽度显示，不缩放（响应式的前提）
+       <body>              放"给人看"的内容
+       ========================================================================== -->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <!-- 手机屏幕适配：让页面宽度等于设备宽度，初始不缩放 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>杨子颉的知识库 | 个人全科学习轨迹</title>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <!-- ==================== 顶部工具栏 ====================
+       按钮都用 onclick 直接在 HTML 上绑事件：
+       onclick="addNote()" 的意思是"被点击时，去执行 app.js 里的 addNote 函数"。
+       写法简单直接，一眼就能看出点了会发生什么。
+
+       搜索框用 onkeyup：每松开一次按键就执行一次 searchNotes()，实现"边打字边搜"。 -->
+  <header>
+    <h1>杨子颉的知识库 <span class="sub">大一全科学习轨迹</span></h1>
+
+    <input id="search" type="text" placeholder="🔍 搜索标题 / 分类 / 正文，回车也行"
+           onkeyup="searchNotes(event)">
+
+    <button onclick="addNote()">＋ 新增</button>
+    <button onclick="reloadFromFile()">🔄 重新加载</button>
+    <button onclick="saveToFile()">💾 保存到文件</button>
+    <button onclick="downloadData()">⬇ 下载数据</button>
+
+    <!-- 这一行放分类筛选的"小药丸"，里面的内容由 app.js 的 showCats() 生成 -->
+    <div id="cats"></div>
+  </header>
+
+  <!-- ==================== 主体：左列表 + 右内容 ====================
+       <ul id="list">     里面没有任何 <li>，因为列表是由 app.js 动态生成的
+                           （showList() 里拼好 HTML 再塞进来）。
+       <div id="content"> 默认放一句提示，点了左边某条之后会被替换成正文。 -->
+  <main>
+    <ul id="list"></ul>
+    <div id="content">
+      <p>点左边的记录查看内容，或点右上角【新增】。</p>
+    </div>
+  </main>
+
+  <!-- ==================== 脚本 ====================
+       两个 <script> 有先后顺序：
+         · marked.min.js 必须先加载，因为 app.js 里要用它（marked.parse）
+         · app.js 最后加载，它执行到最后一行会调用 start()，页面就动起来了
+       两者都放在 </body> 前面，是为了"等页面元素都创建好了再执行脚本"，
+       否则 app.js 里 getElementById 可能还找不到元素。 -->
+  <script src="js/lib/marked.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
