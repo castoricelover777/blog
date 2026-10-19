@@ -34,7 +34,7 @@ public class WebConfig implements WebMvcConfigurer {
     private static final Logger log = LoggerFactory.getLogger(WebConfig.class);
 
     /** 前端源码目录（相对 server/ 目录），在 application.yml 里可改 */
-    @Value("${kb.frontend-dir:../tools/blog-vue}")
+    @Value("${kb.frontend-dir:../src/main/webapp}")
     private String frontendDir;
 
     /**
