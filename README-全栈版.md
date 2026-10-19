@@ -26,7 +26,7 @@
 3. 启动 Spring Boot，自动打开 <http://127.0.0.1:8080/>
 
 > 库和表都是自动创建的：`knowledge_base` 库由 JDBC 参数 `createDatabaseIfNotExist=true` 建，
-> 表由 `schema.sql` 建，第一次启动还会把 `seed/notes.json` 里的 49 篇笔记自动导入。
+> 表由 `schema.sql` 建，第一次启动还会把 `seed/notes.json` 里的 50 篇笔记自动导入。
 > **所以换台电脑只要有 MySQL，双击就能用，不用手动建库导数据。**
 
 ### 手动方式
@@ -48,7 +48,8 @@ JavaBlog/
 ├── 发布到GitHub.bat            ← 本地编辑完，一键同步到 Pages
 ├── docs/preview-fullstack.png  ← 页面预览图
 ├── 启动知识库.bat              ← 旧静态版的启动脚本（仍可用）
-├── data/notes.json             ← 原始数据（种子数据的来源）
+├── src/main/webapp/            ← 静态站源码（Maven Web 目录，Pages 发布这个）
+│   └── data/notes.json         ← 静态站数据（也是种子数据的来源）
 ├── tools/blog-vue/             ← 前端（Vue 3，无构建，原生 ES 模块）
 │   ├── index.html
 │   ├── css/style.css
@@ -60,8 +61,8 @@ JavaBlog/
 │   │   ├── main.js             ← 挂载入口
 │   │   └── vendor/             ← vue / marked（本地文件，不联网）
 │   ├── test/                   ← node 直接跑的单元测试（109 个断言）
-│   ├── publish-to-pages.ps1    ← 【同步脚本】导出 + 比对 + commit + push
-│   └── data/notes.json         ← 旧静态版留下的数据副本
+│   └── data/notes.json         ← 早期静态版留下的数据副本
+├── tools/publish-to-pages.ps1  ← 【同步脚本】导出 + 比对 + commit + push
 └── server/                     ← 后端（Spring Boot 3.5.6）
     ├── pom.xml
     └── src/main/
@@ -75,7 +76,7 @@ JavaBlog/
         └── resources/
             ├── application.yml           ← 数据源/端口/前端目录配置
             ├── schema.sql                ← 建表脚本
-            └── seed/notes.json           ← 首次启动自动导入的 49 篇笔记
+            └── seed/notes.json           ← 首次启动自动导入的 50 篇笔记
 ```
 
 ---
@@ -111,7 +112,7 @@ curl -X POST http://127.0.0.1:8080/api/notes -H "Content-Type: application/json"
 
 | 位置 | 静态版 | 全栈版 |
 |---|---|---|
-| 取数据 | `fetch('data/notes.json')` | `GET /api/notes`（`js/api.js`） |
+| 取数据 | `fetch('src/main/webapp/data/notes.json')` | `GET /api/notes`（`js/api.js`） |
 | 新增 | 本地 push + 手动保存文件 | `POST /api/notes`，落库成功才更新界面 |
 | 修改 | 本地改 + 保存文件 | `PUT /api/notes/{id}` |
 | 删除 | 本地 filter | `DELETE /api/notes/{id}` |
@@ -187,7 +188,7 @@ GitHub Pages 只能托管静态文件，跑不了 Java 和 MySQL。所以线上�
 ```
 双击 启动全栈知识库.bat          → 本地全栈版（http://127.0.0.1:8080/）
    ↓  在页面上新增/编辑/删除笔记（真正写进 MySQL）
-双击 发布到GitHub.bat            → 导出 → 比对 → 写回 data/notes.json → commit → push
+双击 发布到GitHub.bat            → 导出 → 比对 → 写回 src/main/webapp/data/notes.json → commit → push
    ↓  等 1~2 分钟
 https://castoricelover777.github.io/blog/   ← 线上自动更新
 ```
@@ -195,9 +196,9 @@ https://castoricelover777.github.io/blog/   ← 线上自动更新
 ### 脚本做了什么（`tools/publish-to-pages.ps1`）
 
 1. 调 `GET /api/export`，拿到全部笔记（只有 id/date/created/title/category/content 六个字段）
-2. 和现有 `data/notes.json` 做**语义比较**（按 id 排序后比内容，顺序不同不算变化）
+2. 和现有 `src/main/webapp/data/notes.json` 做**语义比较**（按 id 排序后比内容，顺序不同不算变化）
 3. 有变化才写文件（UTF-8 无 BOM、2 空格缩进，和原文件格式一致）
-4. `git add data/notes.json` → `commit` → `push`
+4. `git add src/main/webapp/data/notes.json` → `commit` → `push`
 
 ### 参数
 

@@ -3,8 +3,8 @@
 # ============================================================================
 #  这就是 C 方案的核心脚本，做四件事：
 #    1. 调后端 GET /api/export，拿到 49 篇笔记的 JSON
-#    2. 和现有的 data/notes.json 做「语义比较」（按 id 排序后比内容，避免只是顺序不同就产生提交）
-#    3. 有变化才覆盖 data/notes.json（UTF-8 无 BOM、2 空格缩进，diff 好看）
+#    2. 和现有的 src/main/webapp/data/notes.json 做「语义比较」（按 id 排序后比内容，避免只是顺序不同就产生提交）
+#    3. 有变化才覆盖 src/main/webapp/data/notes.json（UTF-8 无 BOM、2 空格缩进，diff 好看）
 #    4. git add / commit / push → GitHub Pages 1~2 分钟后自动更新
 #
 #  参数：
@@ -23,7 +23,7 @@ $ErrorActionPreference = 'Stop'
 
 # tools/ 的上一级 = 博客根目录
 $BlogRoot = Split-Path $PSScriptRoot -Parent
-$Target   = Join-Path $BlogRoot 'data\notes.json'
+$Target   = Join-Path $BlogRoot 'src\main\webapp\data\notes.json'
 $ApiUrl   = 'http://127.0.0.1:8080/api/export'
 
 Write-Host ''
@@ -125,13 +125,13 @@ Write-Host "  已写入 : $Target"
 # ---------------------------------------------------------------------------
 Push-Location $BlogRoot
 try {
-    $status = git status --porcelain -- data/notes.json
+    $status = git status --porcelain -- src/main/webapp/data/notes.json
     if ([string]::IsNullOrWhiteSpace($status)) {
         Write-Host '[跳过] git 没检测到 notes.json 变化。' -ForegroundColor Green
         exit 0
     }
 
-    git add -- data/notes.json
+    git add -- src/main/webapp/data/notes.json
     $msg = "content: 从本地知识库同步（$($newNotes.Count) 篇）"
     git commit -m $msg
     if ($LASTEXITCODE -ne 0) {
