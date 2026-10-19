@@ -5,9 +5,9 @@
   "type": "module",
   "description": "个人知识库博客的模块化重构版（Vue 3 + ES 模块，无构建步骤）",
   "scripts": {
-    "test": "node test/data.test.mjs && node test/app.test.mjs",
-    "test:data": "node test/data.test.mjs",
-    "test:app": "node test/app.test.mjs",
+    "test": "node data.test.mjs && node app.test.mjs",
+    "test:data": "node data.test.mjs",
+    "test:app": "node app.test.mjs",
     "start": "powershell -NoProfile -ExecutionPolicy Bypass -File server.ps1"
   },
   "devDependencies": {

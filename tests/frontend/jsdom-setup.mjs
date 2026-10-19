@@ -85,7 +85,7 @@ export function setupDOM(html = '<div id="app"></div>') {
  * @returns Vue 的模块导出（createApp / ref / computed / onMounted / nextTick / version…）
  */
 export async function importVue() {
-  return await import('../js/vendor/vue.esm-browser.prod.js');
+  return await import('../../src/main/webapp/js/vendor/vue.esm-browser.prod.js');
 }
 
 /**

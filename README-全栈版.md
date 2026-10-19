@@ -48,20 +48,19 @@ JavaBlog/
 ├── 发布到GitHub.bat            ← 本地编辑完，一键同步到 Pages
 ├── docs/preview-fullstack.png  ← 页面预览图
 ├── 启动知识库.bat              ← 旧静态版的启动脚本（仍可用）
-├── src/main/webapp/            ← 静态站源码（Maven Web 目录，Pages 发布这个）
-│   └── data/notes.json         ← 静态站数据（也是种子数据的来源）
-├── tools/blog-vue/             ← 前端（Vue 3，无构建，原生 ES 模块）
-│   ├── index.html
+├── src/main/webapp/            ← 静态站源码（Maven Web 目录，Pages 直接发布这个）
+│   ├── index.html              ← 前端入口（Vue 3，无构建，原生 ES 模块）
 │   ├── css/style.css
 │   ├── js/
-│   │   ├── api.js              ← 【新增】接口层：所有 fetch 都在这
-│   │   ├── app.js              ← Vue 应用（现在从后端取数）
-│   │   ├── data.js             ← 纯函数：筛选/排序/分组
-│   │   ├── dates.js  utils.js  storage.js（只剩缓存+下载备份）
+│   │   ├── api.js              ← 数据来源层：自动识别「后端模式 / 静态只读模式」
+│   │   ├── app.js              ← Vue 应用
+│   │   ├── data.js             ← 纯函数：筛选/排序/分组/统计
+│   │   ├── dates.js  utils.js  storage.js
 │   │   ├── main.js             ← 挂载入口
 │   │   └── vendor/             ← vue / marked（本地文件，不联网）
-│   ├── test/                   ← node 直接跑的单元测试（109 个断言）
-│   └── data/notes.json         ← 早期静态版留下的数据副本
+│   └── data/notes.json         ← 静态站数据（也是后端种子数据的来源）
+├── tests/frontend/             ← 前端 node 单元测试（109 个断言，不发布到 Pages）
+├── docs/                       ← 预览图 + Vue 重构说明
 ├── tools/publish-to-pages.ps1  ← 【同步脚本】导出 + 比对 + commit + push
 └── server/                     ← 后端（Spring Boot 3.5.6）
     ├── pom.xml
@@ -123,6 +122,18 @@ curl -X POST http://127.0.0.1:8080/api/notes -H "Content-Type: application/json"
 
 **界面渲染、筛选、分组、Markdown 渲染、搜索高亮一行都没改** —— 这就是前端分层的好处。
 
+### 同一个前端，两种运行模式
+
+前端代码只有一份，但会跑在两个环境里，靠 `js/api.js` 的 `detectMode()` 自动识别：
+
+| 环境 | 探测结果 | 行为 |
+|---|---|---|
+| 本地 `http://127.0.0.1:8080` | 有后端 → `api` 模式 | 走 `/api/*`，可增删改，写进 MySQL，显示「● 后端已连接」 |
+| GitHub Pages / 静态预览 | 无后端 → `static` 模式 | 读 `data/notes.json`，**只读**，显示「● 只读模式」+ 黄色横幅，编辑按钮自动隐藏 |
+
+探测方式：启动时 `GET /api/health`，1.5 秒超时。通不了就降级——**页面照样能看，只是不能编辑**，
+而不是弹一堆"连接失败"。
+
 ---
 
 ## 五、这个项目用到了你学过的哪些知识点
@@ -142,10 +153,10 @@ curl -X POST http://127.0.0.1:8080/api/notes -H "Content-Type: application/json"
 | 静态资源映射 / 前后端同源 | `WebConfig.addResourceHandlers` |
 | CORS 跨域 | `WebConfig.addCorsMappings` |
 | Jackson（对象 ↔ JSON） | 所有 Controller 返回值自动序列化 |
-| Vue 3 响应式 / computed | `tools/blog-vue/js/app.js` |
-| Ajax / fetch | `tools/blog-vue/js/api.js` |
+| Vue 3 响应式 / computed | `src/main/webapp/js/app.js` |
+| Ajax / fetch | `src/main/webapp/js/api.js` |
 | ES 模块 + 无构建前端 | `index.html` + `js/main.js` |
-| 单元测试（JUnit / node 断言） | `server/src/test`、`tools/blog-vue/test` |
+| 单元测试（JUnit / node 断言） | `server/src/test`、`tests/frontend` |
 
 ---
 
@@ -157,9 +168,9 @@ cd server
 mvn test
 
 :: 前端：109 个断言（node 直接跑，不需要浏览器）
-cd tools\blog-vue
-node test\data.test.mjs
-node test\app.test.mjs
+cd tests\frontend
+node data.test.mjs
+node app.test.mjs
 ```
 
 > 后端测试还抓到过一个真 bug：同一毫秒内连续新增，`System.currentTimeMillis()`

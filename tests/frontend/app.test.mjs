@@ -47,10 +47,10 @@ const { dom, window, document } = setupDOM();
 // 第 2 步：加载 Vue。
 // 【关键】路径必须和 js/app.js 里 import 的**完全一致**，
 //   node 会按解析后的 URL 缓存模块，路径一致才能拿到同一个 Vue 实例。
-const vue = await import('../js/vendor/vue.esm-browser.prod.js');
+const vue = await import('../../src/main/webapp/js/vendor/vue.esm-browser.prod.js');
 
 // 第 3 步：加载应用模块（它内部也 import 上面那个 Vue）
-const { createBlogApp } = await import('../js/app.js');
+const { createBlogApp } = await import('../../src/main/webapp/js/app.js');
 
 console.log('环境就绪：Vue ' + vue.version + ' + jsdom');
 

@@ -172,3 +172,42 @@ export function pickNewer(fileNotes, cacheNotes) {
   }
   return { use: cacheNotes, reason: 'cache-newer' };
 }
+
+/**
+ * 在本地根据笔记数组算统计数据（纯函数）。
+ *
+ * 【为什么需要它】
+ *   有后端时，统计由 SQL 聚合（GROUP BY / COUNT / SUM）算好返回；
+ *   但在 GitHub Pages 这种纯静态环境里没有后端，
+ *   前端就只能自己算——同样是"数据整理"，放数据层最合适。
+ *
+ * @param {Array} notes
+ * @returns {{total:number, categoryCount:number, totalChars:number,
+ *            firstDate:?string, lastDate:?string,
+ *            categories:Array<{name:string,count:number}>}}
+ */
+export function computeStats(notes) {
+  const list = notes || [];
+  const map = new Map();
+  let totalChars = 0;
+
+  list.forEach((n) => {
+    if (n.category) map.set(n.category, (map.get(n.category) || 0) + 1);
+    totalChars += (n.content || '').length;
+  });
+
+  const categories = Array.from(map.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => (b.count - a.count) || a.name.localeCompare(b.name));
+
+  const dates = list.map((n) => n.date).filter(Boolean).sort();
+
+  return {
+    total: list.length,
+    categoryCount: categories.length,
+    totalChars,
+    firstDate: dates.length ? dates[0] : null,
+    lastDate: dates.length ? dates[dates.length - 1] : null,
+    categories,
+  };
+}

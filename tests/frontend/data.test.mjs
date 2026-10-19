@@ -16,12 +16,12 @@
      node 里没有 document，直接报错。
    ========================================================================== */
 
-import { escapeHtml, highlightTitle } from '../js/utils.js';
-import { today, nowStamp, getMonthKey, getMonthName, getDayText, getMonthNum } from '../js/dates.js';
+import { escapeHtml, highlightTitle } from '../../src/main/webapp/js/utils.js';
+import { today, nowStamp, getMonthKey, getMonthName, getDayText, getMonthNum } from '../../src/main/webapp/js/dates.js';
 import {
   filterNotes, sortNotes, groupByMonth, collectCats,
   looksLikeNotes, pickNewer, newestStamp, findById, isCurrent,
-} from '../js/data.js';
+} from '../../src/main/webapp/js/data.js';
 
 let pass = 0, fail = 0;
 const failures = [];
