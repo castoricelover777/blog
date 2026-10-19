@@ -57,3 +57,10 @@ tools/_*
 
 # ---- Node 依赖目录（体积大，不入库）----
 node_modules/
+
+# ---- Java / Maven 构建产物（可重新生成，不入库）----
+#   server/target 里是编译出来的 class 和打包好的 jar（约 24MB），
+#   每次 mvn package 都会重新生成，没必要进 git；
+#   需要 jar 时执行：cd server && mvn -DskipTests package
+server/target/
+*.class
