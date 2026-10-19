@@ -3,7 +3,9 @@
 > 从「静态 JSON 博客」升级成「真正的前后端分离知识库」：
 > 前端 Vue 3 负责界面，后端 Spring Boot 提供 REST 接口，数据落在 MySQL。
 
-![全栈版预览](docs/preview-fullstack.png)
+![全栈版预览（本地，可编辑）](docs/preview-fullstack.png)
+
+![GitHub Pages 线上版（只读）](docs/preview-github-pages.png)
 
 ---
 
