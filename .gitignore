@@ -48,3 +48,6 @@ data/notes.json.bak
 data/_待导入_*.md
 data/_旧记录存档_*.json
 tools/_*
+
+# ---- Node 依赖目录（体积大，不入库）----
+node_modules/
