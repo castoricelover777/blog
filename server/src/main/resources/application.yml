@@ -1,0 +1,49 @@
+# ============================================================================
+#  application.yml —— 后端配置
+# ============================================================================
+#  【配置在这里 vs 写在代码里，有什么区别】
+#    写在这里改完不用重新编译；而且不同环境（本机 / 别人电脑）只改这一个文件。
+#    这就是 Spring Boot "约定优于配置" 的思路。
+# ============================================================================
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: javaweb-knowledge-base
+
+  # ---- 数据源：Spring Boot 会自动用这些参数创建 HikariCP 连接池 ----
+  #  ${变量名:默认值} 是 Spring 的占位符语法：优先读环境变量，没有就用默认值。
+  #  这样做的好处是——仓库里不用写死真实密码，换台电脑也只要设环境变量即可：
+  #     set DB_PASSWORD=你的密码    (Windows cmd)
+  #     $env:DB_PASSWORD='你的密码' (PowerShell)
+  datasource:
+    # createDatabaseIfNotExist=true：库不存在时自动建，省掉手动建库这一步
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/knowledge_base?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # ---- 建表脚本：每次启动都执行（脚本里是 CREATE TABLE IF NOT EXISTS，重复执行安全） ----
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      encoding: UTF-8
+
+  # ---- Jackson：日期格式化（避免前端拿到 "2026-10-17T00:00:00" 这种难看的格式） ----
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+# ---- 自定义配置：前端目录 & 首次启动是否导入种子数据 ----
+kb:
+  # 前端源码目录（相对 server/ 这一层）。后端会把它当静态资源目录映射到 /
+  frontend-dir: ../tools/blog-vue
+  # 表为空时，是否自动导入 src/main/resources/seed/notes.json
+  seed-on-empty: true
+
+logging:
+  level:
+    com.yangzijie.kb: info

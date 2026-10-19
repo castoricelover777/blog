@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ==========================================================================
+    kb-server —— 个人知识库的后端（Spring Boot + JDBC + MySQL）
+  ==========================================================================
+    【这个后端在本项目里的位置】
+      tools/blog-vue/   前端：Vue 3（无构建、原生 ES 模块）
+      server/           ← 你在这里：Spring Boot 后端，提供 REST 接口
+
+    【它做了什么】
+      1. 把 MySQL 里的笔记表暴露成 REST API（增删改查 + 搜索 + 分类 + 统计）
+      2. 顺手把前端页面也托管出去（同一个 8080 端口，不需要处理跨域）
+      3. 第一次启动时，如果表是空的，自动把 seed/notes.json 的笔记导入
+
+    【用到的知识（都是你已经学过的）】
+      · Maven 坐标 / 父工程 / 依赖范围
+      · Spring Boot 起步依赖（starter-web / starter-jdbc）
+      · IOC + DI：@Repository / @Service / @RestController 都是 bean，靠构造器注入
+      · @ComponentScan：启动类在 com.yangzijie.kb，所以子包里的 bean 才会被扫到
+      · HTTP + RESTful：GET/POST/PUT/DELETE → 查/增/改/删
+      · JDBC：JdbcTemplate 就是 JDBC 的封装，底层还是 Connection/PreparedStatement
+  ==========================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- 父工程：Spring Boot 官方骨架。
+       有了它，下面很多依赖都不用写版本号（依赖管理在父工程里）。 -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.6</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.yangzijie</groupId>
+  <artifactId>kb-server</artifactId>
+  <version>1.0.0</version>
+  <name>kb-server</name>
+  <description>个人知识库后端：Spring Boot + JDBC + MySQL，为 Vue 前端提供 REST 接口</description>
+
+  <properties>
+    <!-- 用 JDK 25 编译，但产出 Java 17 字节码（课程/讲义都是 17，兼容性更好） -->
+    <java.version>17</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <!-- ① Web：内嵌 Tomcat + SpringMVC + Jackson（把对象转成 JSON） -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- ② JDBC：spring-boot-starter-jdbc 会带进 HikariCP 连接池 + JdbcTemplate。
+         比原始 JDBC 好在：连接自动管理、不用手写 try-finally 关连接。
+         底层还是你学过的 JDBC，只是帮你把样板代码省了。 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+
+    <!-- ③ MySQL 驱动：只在运行时需要（编译期只用 java.sql 接口）。
+         版本由父工程管理（Spring Boot BOM 里有），所以不用写版本号。 -->
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- ④ 测试：JUnit 5 + Spring Test -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>kb-server</finalName>
+    <plugins>
+      <!-- 打可执行 jar：java -jar kb-server.jar 就能启动 -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
