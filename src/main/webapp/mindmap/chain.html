@@ -356,7 +356,7 @@ function render(keepView){
       ev.stopPropagation();
       if (state.collapsedStage.has(i)) state.collapsedStage.delete(i);
       else state.collapsedStage.add(i);
-      render();
+      render(true);   // 保持当前缩放/平移，不重置视图
     });
     gN.appendChild(g);
 
@@ -396,7 +396,7 @@ function render(keepView){
         if (!row.it.details.length) return;
         if (state.collapsedItem.has(row.key)) state.collapsedItem.delete(row.key);
         else state.collapsedItem.add(row.key);
-        render();
+        render(true);   // 保持当前缩放/平移，不重置视图
       });
       gN.appendChild(gI);
 

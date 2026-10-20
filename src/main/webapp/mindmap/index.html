@@ -402,7 +402,7 @@ function render(keepView){
       ev.stopPropagation();
       if (n.c && n.c.length){
         if (state.collapsed.has(n)) state.collapsed.delete(n); else state.collapsed.add(n);
-        render();
+        renderKeepNode(n);
       }
     });
     gN.appendChild(g);
@@ -412,6 +412,18 @@ function render(keepView){
   else fit();
   buildLegend();
   updateStats();
+}
+
+/* 展开/折叠后保持视图：以被点击节点为锚点，缩放与位置都不重置 */
+function renderKeepNode(n){
+  if (!n || n._x == null || n._y == null){ render(true); return; }
+  const ax = state.tx + n._x * state.scale;     // 点击节点在屏幕上的位置（渲染前）
+  const ay = state.ty + n._y * state.scale;
+  render(true);                                  // true = 沿用当前缩放/平移
+  if (n._x == null || n._y == null) return;
+  state.tx += ax - (state.tx + n._x * state.scale);   // 把同一个节点挪回原处
+  state.ty += ay - (state.ty + n._y * state.scale);
+  apply();
 }
 
 /* ---------- 缩放/平移 ---------- */
