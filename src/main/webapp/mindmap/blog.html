@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>个人博客源码运行逻辑 · 思维导图</title>
+<style>
+  :root{
+    --bg:#faf9f6; --ink:#111827; --muted:#6b7280;
+    --font:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --shadow:0 1px 2px rgba(17,24,39,.05),0 10px 30px rgba(17,24,39,.07);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overflow:hidden}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--font);
+    background-image:radial-gradient(circle at 1px 1px,#e6e3dc 1px,transparent 0);
+    background-size:24px 24px;
+  }
+  #app{position:fixed;inset:0}
+
+  .topbar{
+    position:fixed;top:0;left:0;right:0;height:60px;z-index:20;
+    display:flex;align-items:center;gap:16px;padding:0 20px;
+    background:linear-gradient(180deg,rgba(250,249,246,.97),rgba(250,249,246,.80));
+    backdrop-filter:blur(10px); border-bottom:1px solid #e8e5de;
+  }
+  .brand{display:flex;align-items:baseline;gap:9px}
+  .brand h1{margin:0;font-size:15.5px;font-weight:800;letter-spacing:.3px}
+  .brand .sub{font-size:11px;color:var(--muted);letter-spacing:.4px}
+  .spacer{flex:1}
+  .btns{display:flex;gap:6px;flex-wrap:wrap}
+  button{
+    font-family:inherit;font-size:12px;font-weight:600;color:#374151;
+    background:#fff;border:1px solid #dedad2;padding:6px 10px;border-radius:7px;
+    cursor:pointer;transition:.14s;box-shadow:0 1px 1px rgba(17,24,39,.03);
+  }
+  button:hover{background:#f2efe9;border-color:#c9c4ba}
+  .zoom{display:flex;align-items:center;border:1px solid #dedad2;border-radius:7px;overflow:hidden;background:#fff}
+  .zoom button{border:0;border-radius:0;box-shadow:none;padding:6px 9px}
+  .zoom .val{font-size:11px;color:var(--muted);padding:0 7px;min-width:42px;text-align:center}
+
+  svg#map{width:100%;height:100%;display:block;cursor:grab}
+  svg#map.dragging{cursor:grabbing}
+  .node text{font-family:var(--font);dominant-baseline:middle;pointer-events:none}
+  .node{cursor:pointer}
+
+  .hint{
+    position:fixed;left:20px;bottom:14px;z-index:20;font-size:11px;color:var(--muted);
+    background:rgba(255,255,255,.88);border:1px solid #e8e5de;padding:6px 11px;
+    border-radius:8px;box-shadow:var(--shadow);
+  }
+  .hint b{color:#374151}
+  .legend{
+    position:fixed;right:20px;bottom:14px;z-index:20;display:flex;gap:11px;flex-wrap:wrap;
+    max-width:56vw;font-size:10.5px;color:var(--muted);background:rgba(255,255,255,.88);
+    border:1px solid #e8e5de;padding:6px 11px;border-radius:8px;box-shadow:var(--shadow);
+  }
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:0}
+  /* 学习状态 */
+  .stats{display:flex;gap:11px;align-items:center;font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .stats b{color:#374151;font-weight:700}
+  .stats .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+  .mark{cursor:pointer}
+  .mark:hover circle{stroke-width:2.4}
+  /* 视图切换 */
+  .seg{display:flex;background:#efece6;border:1px solid #dedad2;border-radius:8px;padding:2px;gap:2px}
+  .seg a{font-size:12px;font-weight:600;color:#6b7280;text-decoration:none;padding:5px 11px;border-radius:6px;transition:.15s;white-space:nowrap}
+  .seg a:hover{color:#374151;background:rgba(255,255,255,.6)}
+  .seg a.on{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(17,24,39,.14)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <h1>个人博客源码运行逻辑</h1>
+      <span class="sub">JavaBlog 全栈项目 · 从启动到部署</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="seg">
+      <a href="index.html">思维导图</a>
+      <a href="chain.html">长链图</a>
+      <a class="on">博客源码</a>
+    </div>
+    <div class="btns">
+      <button id="btn-expand">全部展开</button>
+      <button id="btn-collapse">只看阶段</button>
+      <button id="btn-items">展开到环节</button>
+      <button id="btn-fit">适应窗口</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <button id="btn-export">导出标记</button>
+    <button id="btn-import">导入标记</button>
+    <input type="file" id="file-import" accept=".json,application/json" style="display:none">
+    <button id="btn-reset">清空标记</button>
+    <div class="zoom">
+      <button id="btn-out">−</button><span class="val" id="zoomval">100%</span><button id="btn-in">+</button>
+    </div>
+  </div>
+  <svg id="map"><g id="scene"></g></svg>
+  <div class="hint"><b>点击节点</b>展开/折叠 · <b>滚轮</b>缩放 · <b>拖拽</b>平移</div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<script>
+const DATA = {"t": "个人博客源码运行逻辑", "c": [{"t": "阶段〇：全景速览（先建立全局认知）", "c": [{"t": "0.1 一句话主线：打开网页 → main.js 把 Vue 应用挂到 #app → init() 先读缓存 → 探测有没有后端 → 取数据 → 归一化加工 → Vue 响应式渲染；后端那一侧启动 Tomcat → Controller 接请求 → Service 校验 → JdbcNoteDao 查 MySQL → 返回 JSON", "c": [], "color": "#475569"}, {"t": "0.2 技术栈实名（不是泛泛而谈）", "c": [{"t": "前端：Vue 3 ESM 浏览器版（vendor/vue.esm-browser.prod.js）+ 原生 ES Module，共 7 个 js 模块", "c": [], "color": "#475569"}, {"t": "后端：Spring Boot 3.5 + Spring MVC + JdbcTemplate + HikariCP，15 个源文件", "c": [], "color": "#475569"}, {"t": "数据库：MySQL 8.4，表 note（8 个字段 + 2 个索引），51 行数据", "c": [], "color": "#475569"}], "color": "#475569"}, {"t": "0.3 两套运行形态", "c": [{"t": "本地全栈形态：前端 + SpringBoot + MySQL 全在，mode='api'，可以增删改，数据落库", "c": [], "color": "#475569"}, {"t": "线上静态形态：只有前端 + data/notes.json，mode='static'，只读，GitHub Pages 用这个形态", "c": [], "color": "#475569"}], "color": "#475569"}, {"t": "0.4 代码规模", "c": [{"t": "前端：index.html 131 行、app.js 340 行、data.js 213 行、api.js 150 行、storage.js 113 行、dates.js 70 行、utils.js 75 行、main.js 22 行", "c": [], "color": "#475569"}, {"t": "后端：NoteController 142 行、NoteService 187 行、JdbcNoteDao 121 行、NoteDao 39 行、WebConfig 81 行、NoteSeeder 87 行、ApiExceptionHandler 59 行", "c": [], "color": "#475569"}], "color": "#475569"}, {"t": "0.5 模块依赖图（谁 import 谁）", "c": [{"t": "入口层：index.html 只引一个脚本：js/main.js", "c": [], "color": "#475569"}, {"t": "main.js 的两条依赖：import { createApp } from './vendor/vue.esm-browser.prod.js'；import { createBlogApp } from './app.js'", "c": [], "color": "#475569"}, {"t": "app.js 的依赖：依赖 api.js（数据）、data.js（加工）、storage.js（缓存）、dates.js（日期）、utils.js（转义）", "c": [], "color": "#475569"}, {"t": "关键设计：app.js 只\"定义应用\"（导出 createBlogApp 工厂），main.js 才\"挂载应用\"，这样测试可以在 jsdom 里挂载而不碰真实页面", "c": [], "color": "#475569"}], "color": "#475569"}], "color": "#475569"}, {"t": "阶段一：index.html 骨架", "c": [{"t": "1.1 单页结构", "c": [{"t": "知识点：SPA 单页——整个站点只有一个 HTML，页面切换靠 Vue 改 DOM，不刷新", "c": [], "color": "#2563EB"}, {"t": "详细过程：浏览器请求 / → 返回 index.html → 解析出 6 个关键挂载点", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "1.2 六个关键 DOM 节点", "c": [{"t": "清单：#app（Vue 挂载根）、#search（搜索框）、#cats（分类列表）、#list（笔记列表）、#content（详情区）、#catList（分类下拉）", "c": [], "color": "#2563EB"}, {"t": "关键细节：Vue 通过 mount('#app') 接管 #app 内部，所有渲染都在它里面完成", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "1.3 只引一个脚本", "c": [{"t": "知识点：ES Module 入口——index.html 里只有 <script type=\"module\" src=\"js/main.js\">，其余模块由 main.js 用 import 串起来", "c": [], "color": "#2563EB"}, {"t": "关键细节：type=\"module\" 是必须的，否则 import 语法不生效；同时模块默认严格模式、默认延迟执行", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "1.4 Vue 用本地 vendor 而不是 CDN", "c": [{"t": "知识点：离线可用——vendor/vue.esm-browser.prod.js 放在仓库里，断网也能打开，不依赖 CDN", "c": [], "color": "#2563EB"}, {"t": "关键细节：用相对路径 './vendor/vue.esm-browser.prod.js' 而不是裸名 'vue'，浏览器和 Node 都能直接解析", "c": [], "color": "#2563EB"}], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "阶段二：main.js 挂载（只有 3 行有效代码）", "c": [{"t": "2.1 导入 Vue", "c": [{"t": "代码：import { createApp } from './vendor/vue.esm-browser.prod.js';", "c": [], "color": "#0E7490"}, {"t": "说明：拿到 Vue 的 createApp 工厂函数，后面交给 app.js 用", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "2.2 导入应用工厂", "c": [{"t": "代码：import { createBlogApp } from './app.js';", "c": [], "color": "#0E7490"}, {"t": "说明：createBlogApp 是\"应用定义\"，还没执行任何副作用", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "2.3 挂载", "c": [{"t": "代码：createBlogApp({ createApp }).mount('#app');", "c": [], "color": "#0E7490"}, {"t": "详细过程：把 createApp 作为依赖注入给工厂 → 工厂内部创建 Vue 应用 → mount 到 #app → 触发 init() 发请求", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "2.4 为什么\"定义\"和\"挂载\"要分开", "c": [{"t": "知识点：副作用隔离——挂载会操作真实 DOM、发真实请求；分开后测试可以直接 import app.js 的工厂，挂到 jsdom 假页面上，用假 fetch 喂数据", "c": [], "color": "#0E7490"}, {"t": "关键细节：这就是 Vue 项目里 main.js 与 App.vue 分开的同一个理由", "c": [], "color": "#0E7490"}], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "阶段三：api.js 数据源判定（双模式核心）", "c": [{"t": "3.1 mode 状态机", "c": [{"t": "知识点：三态——let mode = 'unknown' → detectMode() 之后变成 'api' 或 'static'；只探测一次，结果缓存在 module 变量里", "c": [], "color": "#7C3AED"}, {"t": "代码：let mode = 'unknown'; export function getMode(){ return mode; }", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.2 detectMode() 探测后端", "c": [{"t": "详细过程：请求 GET /api/health → 成功（且返回 ok）→ mode='api'；超时或报错 → mode='static'", "c": [], "color": "#7C3AED"}, {"t": "代码：export async function detectMode(){ if (mode !== 'unknown') return mode; … }", "c": [], "color": "#7C3AED"}, {"t": "关键细节：已经探测过就直接返回缓存，避免每次调用都发一次请求", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.3 isReadOnly() 判断只读", "c": [{"t": "代码：export function isReadOnly(){ return mode === 'static'; }", "c": [], "color": "#7C3AED"}, {"t": "用途：app.js 用它决定\"新增/编辑/删除\"按钮显不显示——这就是能力降级", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.4 request() 统一封装", "c": [{"t": "知识点：一个出口发所有请求——内部统一处理：拼 URL、带超时信号、检查 res.ok、解析 JSON、错误时抛带信息的 Error", "c": [], "color": "#7C3AED"}, {"t": "代码特征：const msg = (data && data.error) ? data.error : ('HTTP ' + res.status);", "c": [], "color": "#7C3AED"}, {"t": "关键细节：后端返回的 error 字段会被优先用作用户提示，比裸的 HTTP 500 友好得多", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.5 timeoutSignal(ms) 超时控制", "c": [{"t": "知识点：AbortSignal——用 AbortController 生成信号，超时就中止请求，避免静态环境下探测卡住很久", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.6 fetchNotes 按模式分派", "c": [{"t": "代码：if (mode === 'static') return fetchStaticNotes();  // 否则走 /api/notes", "c": [], "color": "#7C3AED"}, {"t": "详细过程：静态模式 fetch data/notes.json；API 模式 GET /api/notes（可带 keyword / category 参数）", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.7 写操作的三道闸", "c": [{"t": "知识点：ensureWritable()——createNote / updateNote / deleteNote 进来第一件事就是调用 it，静态模式下直接抛错，避免\"看起来能点其实写不进去\"", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.8 其他接口封装", "c": [{"t": "清单：fetchStats()、fetchCategories()、checkHealth()、createNote()、updateNote()、deleteNote()", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "阶段四：app.js 应用骨架（340 行，最大模块）", "c": [{"t": "4.1 工厂函数 createBlogApp", "c": [{"t": "知识点：依赖注入——export function createBlogApp(options = {})，Vue 的 createApp 从参数传进来，而不是直接 import——为了测试能替换", "c": [], "color": "#047857"}, {"t": "关键细节：函数内部先 const app = createApp({...}) 定义组件，再 return app，自身不 mount", "c": [], "color": "#047857"}], "color": "#047857"}, {"t": "4.2 响应式状态（ref）", "c": [{"t": "清单：notes、keyword、currentCat、currentId、mode、loading、loadError、serverStatus、form 等都用 ref() 声明", "c": [], "color": "#047857"}, {"t": "关键细节：Vue 3 的 ref 会把值包成 .value 访问，模板里自动解包", "c": [], "color": "#047857"}], "color": "#047857"}, {"t": "4.3 派生数据（computed）", "c": [{"t": "清单：filtered（筛选后列表）、cats（分类统计）、grouped（按月分组）、isReadOnly（是否只读）、current（当前详情）", "c": [], "color": "#047857"}, {"t": "关键细节：computed 有缓存：依赖不变就不重算，比在模板里写函数高效", "c": [], "color": "#047857"}], "color": "#047857"}, {"t": "4.4 init() 启动流程（六步）", "c": [{"t": "步骤①读缓存：const cache = readCache(); const hasCache = looksLikeNotes(cache); if (hasCache) applyNotes(cache);", "c": [], "color": "#047857"}, {"t": "步骤②判定模式：mode.value = await api.detectMode();", "c": [], "color": "#047857"}, {"t": "步骤③取数据：const list = await api.fetchNotes(); applyNotes(list);", "c": [], "color": "#047857"}, {"t": "步骤④记录状态：serverStatus.value = mode.value === 'api' ? 'online' : 'static';", "c": [], "color": "#047857"}, {"t": "步骤⑤刷新统计：await refreshStats();", "c": [], "color": "#047857"}, {"t": "步骤⑥收尾：finally { loading.value = false; }", "c": [], "color": "#047857"}], "color": "#047857"}, {"t": "4.5 缓存优先策略", "c": [{"t": "知识点：先显示后刷新——先把 localStorage 里的旧数据显示出来，再去请求网络——用户不会盯着空白页等", "c": [], "color": "#047857"}, {"t": "关键细节：looksLikeNotes() 会校验缓存结构，防止坏数据把页面搞崩", "c": [], "color": "#047857"}], "color": "#047857"}, {"t": "4.6 失败降级", "c": [{"t": "详细过程：catch 里：serverStatus='offline'；有缓存就 showToast('加载失败，当前显示本地缓存')；没缓存才显示 loadError 提示\"请先双击启动全栈知识库.bat\"", "c": [], "color": "#047857"}, {"t": "关键细节：这条错误提示文案直接指向了用户的下一步动作，比\"加载失败\"有用得多", "c": [], "color": "#047857"}], "color": "#047857"}, {"t": "4.7 Vue 模板渲染", "c": [{"t": "知识点：数据驱动——列表用 v-for 渲染卡片，详情用 v-html 渲染 Markdown；数据一变视图自动更新，不用手动操作 DOM", "c": [], "color": "#047857"}, {"t": "关键细节：v-html 前必须先过 renderMarkdown + escapeHtml，否则就是 XSS 漏洞", "c": [], "color": "#047857"}], "color": "#047857"}, {"t": "4.8 交互方法清单", "c": [{"t": "读操作：selectCat()、clearSearch()、toggleMonth()、openNote()、doReload()", "c": [], "color": "#047857"}, {"t": "写操作：openAdd()、openEdit()、closeForm()、saveForm()、deleteNote()、doDownload()", "c": [], "color": "#047857"}, {"t": "辅助：showToast()、isCollapsed()、renderMarkdown()、applyNotes()、refreshStats()", "c": [], "color": "#047857"}], "color": "#047857"}], "color": "#047857"}, {"t": "阶段五：data.js 纯函数加工（213 行）", "c": [{"t": "5.1 filterNotes(notes, keyword, category)", "c": [{"t": "知识点：双条件叠加——关键词：把 title + category + content 拼成一个大字符串再 toLowerCase 后 includes；分类：严格等值比较", "c": [], "color": "#C2410C"}, {"t": "代码特征：const big = ((n.title||'') + ' ' + (n.category||'') + ' ' + (n.content||'')).toLowerCase();", "c": [], "color": "#C2410C"}, {"t": "关键细节：搜索正文而不是只搜标题，所以搜\"MyBatis\"能搜到正文里提到的所有笔记", "c": [], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "5.2 sortNotes(notes)", "c": [{"t": "知识点：按日期倒序——按 note_date 字符串比较，新的在前", "c": [], "color": "#C2410C"}, {"t": "关键细节：日期必须是 YYYY-MM-DD 格式，字典序才等于时间序；换格式排序就错", "c": [], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "5.3 groupByMonth(notes)", "c": [{"t": "知识点：按月归并——用对象当桶，key 是 \"2026-10\"，值是当月笔记数组，最后转成数组给视图", "c": [], "color": "#C2410C"}, {"t": "用途：页面左侧的\"按月折叠\"分组就是它算出来的", "c": [], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "5.4 collectCats(notes)", "c": [{"t": "知识点：分类计数——遍历一遍统计每个分类几篇，返回 [{name, count}] 给标签栏", "c": [], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "5.5 computeStats(notes)", "c": [{"t": "清单：总数、总字数（sum of content.length）、首篇日期、末篇日期、分类数", "c": [], "color": "#C2410C"}, {"t": "关键细节：页面顶部那行\"51 篇 / 17.4 万字 / 2026-07-29 ~ 2026-10-19\"就是它算的", "c": [], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "5.6 pickNewer(fileNotes, cacheNotes)", "c": [{"t": "知识点：谁新用谁——比较两份数据的最新时间戳，选新的那份，避免用旧缓存覆盖新文件", "c": [], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "5.7 查找类工具", "c": [{"t": "清单：findById()、findIndexById()、isCurrent()、newestStamp()、looksLikeNotes()", "c": [], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "5.8 为什么这些函数要单独一个文件", "c": [{"t": "知识点：纯函数可测——不碰 DOM、不发请求，输入什么输出什么——所以 data.test.mjs 能 51 个用例全覆盖", "c": [], "color": "#C2410C"}], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "阶段六：storage.js / dates.js / utils.js", "c": [{"t": "6.1 storage.js 四个函数", "c": [{"t": "清单：saveCache(notes) 存到 localStorage；readCache() 读并 JSON.parse；clearCache() 清空；downloadData(notes, filename) 触发浏览器下载", "c": [], "color": "#BE123C"}, {"t": "关键细节：localStorage 只能存字符串，必须 JSON.stringify / JSON.parse 往返", "c": [], "color": "#BE123C"}], "color": "#BE123C"}, {"t": "6.2 downloadData 的作用", "c": [{"t": "用途：把当前数据导出成 notes.json 下载下来——这就是\"本地改完要同步到线上\"的关键一步", "c": [], "color": "#BE123C"}], "color": "#BE123C"}, {"t": "6.3 dates.js 日期工具", "c": [{"t": "清单：getMonthKey（\"2026-10\"）、getMonthNum、getMonthName（\"2026年10月\"）、getDayText（\"10-19\"）、today()、nowStamp()", "c": [], "color": "#BE123C"}, {"t": "关键细节：内部有 pad(n) 补零，保证月份日期都是两位", "c": [], "color": "#BE123C"}], "color": "#BE123C"}, {"t": "6.4 utils.js 工具", "c": [{"t": "escapeHtml(s)：把 & < > \" ' 替换成实体，防 XSS 的第一道防线", "c": [], "color": "#BE123C"}, {"t": "highlightTitle(text, keyword)：在标题里把命中的关键词包成 <mark>，搜索时高亮", "c": [], "color": "#BE123C"}], "color": "#BE123C"}], "color": "#BE123C"}, {"t": "阶段七：后端启动（Spring Boot）", "c": [{"t": "7.1 KbApplication", "c": [{"t": "代码：@SpringBootApplication + SpringApplication.run(KbApplication.class, args)", "c": [], "color": "#0F766E"}, {"t": "详细过程：启动 IOC 容器 → 扫描 com.yangzijie.kb 下的 Bean → 启动内嵌 Tomcat → 监听 8080", "c": [], "color": "#0F766E"}], "color": "#0F766E"}, {"t": "7.2 application.yml 五个关键配置", "c": [{"t": "server.port：8080", "c": [], "color": "#0F766E"}, {"t": "spring.datasource：jdbc:mysql://127.0.0.1:3306/knowledge_base，带 createDatabaseIfNotExist=true（库不存在自动建）", "c": [], "color": "#0F766E"}, {"t": "spring.sql.init：mode: always + schema-locations: classpath:schema.sql → 每次启动都执行建表脚本", "c": [], "color": "#0F766E"}, {"t": "kb.frontend-dir：../src/main/webapp → 后端把它当静态资源根", "c": [], "color": "#0F766E"}, {"t": "kb.seed-on-empty：true → 空表时导入种子数据", "c": [], "color": "#0F766E"}], "color": "#0F766E"}, {"t": "7.3 schema.sql 建表", "c": [{"t": "表名与引擎：note 表；ENGINE=InnoDB；CHARSET=utf8mb4；COLLATE=utf8mb4_unicode_ci", "c": [], "color": "#0F766E"}, {"t": "八个字段：id BIGINT 主键、note_date DATE、created VARCHAR(16)、title VARCHAR(200)、category VARCHAR(50)、content MEDIUMTEXT、created_at DATETIME、updated_at DATETIME", "c": [], "color": "#0F766E"}, {"t": "两个索引：idx_note_date（按日期查）、idx_category（按分类查）", "c": [], "color": "#0F766E"}, {"t": "关键细节：CREATE TABLE IF NOT EXISTS —— 重复执行安全，所以 mode: always 不会报错", "c": [], "color": "#0F766E"}], "color": "#0F766E"}, {"t": "7.4 WebConfig 静态资源映射", "c": [{"t": "知识点：一个端口两件事——把 kb.frontend-dir 目录映射到 /，于是 http://localhost:8080 既能看到页面，又能访问 /api/*", "c": [], "color": "#0F766E"}, {"t": "关键细节：因为同源，所以前端不需要处理跨域（CORS）——这是本地开发省事的关键", "c": [], "color": "#0F766E"}], "color": "#0F766E"}, {"t": "7.5 NoteSeeder 种子导入", "c": [{"t": "详细过程：启动时 count() 查表 → 表为空 → 读 classpath:seed/notes.json → 逐条 insert", "c": [], "color": "#0F766E"}, {"t": "关键细节：必须先判断\"空表才导入\"，否则每次启动都重复插入，数据会翻倍", "c": [], "color": "#0F766E"}], "color": "#0F766E"}], "color": "#0F766E"}, {"t": "阶段八：NoteController 九个接口", "c": [{"t": "8.1 GET /api/health", "c": [{"t": "返回：Map，含 status / 时间 / 版本等信息", "c": [], "color": "#9333EA"}, {"t": "用途：前端 detectMode() 就靠它判断后端活没活", "c": [], "color": "#9333EA"}], "color": "#9333EA"}, {"t": "8.2 GET /api/notes", "c": [{"t": "参数：@RequestParam(required=false) String keyword、String category", "c": [], "color": "#9333EA"}, {"t": "返回：List<Note>", "c": [], "color": "#9333EA"}, {"t": "详细过程：直接转给 NoteService.list(keyword, category)，Controller 不做任何过滤逻辑", "c": [], "color": "#9333EA"}], "color": "#9333EA"}, {"t": "8.3 GET /api/notes/{id}", "c": [{"t": "参数：@PathVariable long id", "c": [], "color": "#9333EA"}, {"t": "返回：单个 Note；找不到就由 Service 抛 NotFoundException → 最终 404", "c": [], "color": "#9333EA"}], "color": "#9333EA"}, {"t": "8.4 POST /api/notes", "c": [{"t": "参数：@RequestBody Note note", "c": [], "color": "#9333EA"}, {"t": "返回：ResponseEntity<Note>，状态码 201 Created", "c": [], "color": "#9333EA"}, {"t": "详细过程：Controller 只做转发；生成 id、校验、落库全在 Service", "c": [], "color": "#9333EA"}], "color": "#9333EA"}, {"t": "8.5 PUT /api/notes/{id}", "c": [{"t": "参数：@PathVariable long id + @RequestBody Note note", "c": [], "color": "#9333EA"}, {"t": "关键细节：路径里的 id 为准，覆盖请求体里的 id，防止前端传错", "c": [], "color": "#9333EA"}], "color": "#9333EA"}, {"t": "8.6 DELETE /api/notes/{id}", "c": [{"t": "返回：ResponseEntity<Void>，204 No Content", "c": [], "color": "#9333EA"}], "color": "#9333EA"}, {"t": "8.7 GET /api/categories", "c": [{"t": "返回：List<CategoryStat>，每项含分类名和篇数", "c": [], "color": "#9333EA"}], "color": "#9333EA"}, {"t": "8.8 GET /api/stats", "c": [{"t": "返回：Stats 对象（总篇数、总字数、首末日期、分类数）", "c": [], "color": "#9333EA"}], "color": "#9333EA"}, {"t": "8.9 GET /api/export", "c": [{"t": "关键细节：produces = \"application/json;charset=UTF-8\"，直接返回 JSON 字符串", "c": [], "color": "#9333EA"}, {"t": "用途：把数据库里的 51 篇导出成静态 notes.json，供 GitHub Pages 使用——**这就是\"本地改完同步线上\"的桥梁**", "c": [], "color": "#9333EA"}], "color": "#9333EA"}], "color": "#9333EA"}, {"t": "阶段九：NoteService 业务层", "c": [{"t": "9.1 list(keyword, category)", "c": [{"t": "详细过程：原样透传给 dao.findAll(keyword, category)，业务层不做额外过滤", "c": [], "color": "#B45309"}], "color": "#B45309"}, {"t": "9.2 create(input) 六道校验", "c": [{"t": "校验清单：请求体不能为空 → 标题不能为空 → 标题不能超过 200 字 → 分类不能为空 → 分类不能超过 50 字 → 正文不能为空", "c": [], "color": "#B45309"}, {"t": "代码：throw new IllegalArgumentException(\"标题不能为空\");", "c": [], "color": "#B45309"}, {"t": "关键细节：长度限制和数据库字段长度（200 / 50）严格对齐，避免到数据库才报错", "c": [], "color": "#B45309"}], "color": "#B45309"}, {"t": "9.3 create 的 id 生成", "c": [{"t": "详细过程：沿用前端的时间戳作为 id（比如 1792371600050），保证唯一且有序", "c": [], "color": "#B45309"}, {"t": "关键细节：也可以用自增主键，但沿用时间戳的好处是前后端数据可迁移", "c": [], "color": "#B45309"}], "color": "#B45309"}, {"t": "9.4 update(id, input)", "c": [{"t": "详细过程：先 get(id) 确认存在（不存在抛 NotFoundException）→ 同样六道校验 → dao.update()", "c": [], "color": "#B45309"}], "color": "#B45309"}, {"t": "9.5 delete(id)", "c": [{"t": "详细过程：先确认存在，再 dao.deleteById(id)；返回 void，Controller 转成 204", "c": [], "color": "#B45309"}], "color": "#B45309"}, {"t": "9.6 stats() 与 exportForStatic()", "c": [{"t": "stats：组合 dao.count()、dao.sumContentChars()、最早/最晚日期、分类数", "c": [], "color": "#B45309"}, {"t": "exportForStatic：返回 List<Map>，字段名对齐前端 data/notes.json 的结构（date / created / title / category / content）", "c": [], "color": "#B45309"}, {"t": "关键细节：导出格式必须和静态 JSON 完全一致，否则线上读取会错位", "c": [], "color": "#B45309"}], "color": "#B45309"}], "color": "#B45309"}, {"t": "阶段十：JdbcNoteDao 与 SQL", "c": [{"t": "10.1 NoteDao 接口八个方法", "c": [{"t": "清单：findAll(keyword, category)、findById(id)、insert(note)、update(note)、deleteById(id)、count()、countByCategory()、sumContentChars()", "c": [], "color": "#4B5563"}, {"t": "知识点：面向接口——Service 只依赖接口，换实现（比如以后换 MyBatis）不用改 Service", "c": [], "color": "#4B5563"}], "color": "#4B5563"}, {"t": "10.2 JdbcTemplate 用法", "c": [{"t": "知识点：模板方法——用 JdbcTemplate 替掉原生 JDBC 的六步：拿连接、建 PreparedStatement、设参、执行、遍历 ResultSet、关资源", "c": [], "color": "#4B5563"}, {"t": "详细过程：jdbc.query(sql, rowMapper, args) / jdbc.update(sql, args) / jdbc.queryForObject(sql, 类型)", "c": [], "color": "#4B5563"}], "color": "#4B5563"}, {"t": "10.3 RowMapper 行转对象", "c": [{"t": "详细过程：把 ResultSet 的一行映射成 Note 对象：rs.getLong(\"id\")、rs.getDate(\"note_date\")、rs.getString(\"title\")…", "c": [], "color": "#4B5563"}, {"t": "关键细节：时间字段用 rs.getTimestamp(...).toLocalDateTime() 转成 Java 8 时间类型", "c": [], "color": "#4B5563"}], "color": "#4B5563"}, {"t": "10.4 动态条件查询", "c": [{"t": "代码骨架：\"SELECT … FROM note WHERE 1 = 1\"，后面按需拼 \" AND title LIKE ?\" / \" AND category = ?\"", "c": [], "color": "#4B5563"}, {"t": "关键细节：WHERE 1=1 打底，后面每个条件都能安全地用 AND 开头，不用判断\"是不是第一个条件\"", "c": [], "color": "#4B5563"}], "color": "#4B5563"}, {"t": "10.5 参数化防注入", "c": [{"t": "知识点：? 占位符——所有值都走 ? 传参，SQL 结构在预编译阶段就固定，用户输入永远只是\"值\"", "c": [], "color": "#4B5563"}, {"t": "关键细节：绝不字符串拼 SQL —— 前端输入 ' or '1'='1 也只会被当成一个普通字符串", "c": [], "color": "#4B5563"}], "color": "#4B5563"}, {"t": "10.6 HikariCP 连接池", "c": [{"t": "知识点：借还而非新建——Spring Boot 默认连接池，启动时建好一批连接，请求用完归还，避免每次握手 + 认证的开销", "c": [], "color": "#4B5563"}], "color": "#4B5563"}, {"t": "10.7 写操作自动提交", "c": [{"t": "关键细节：单条 DML 默认 autocommit，执行完立即提交；如果以后要多表操作，需要 @Transactional", "c": [], "color": "#4B5563"}], "color": "#4B5563"}], "color": "#4B5563"}, {"t": "阶段十一：测试（109 个用例）", "c": [{"t": "11.1 data.test.mjs（51 个用例）", "c": [{"t": "知识点：纯函数测试——覆盖 filterNotes、sortNotes、groupByMonth、collectCats、computeStats 等，不依赖浏览器", "c": [], "color": "#475569"}], "color": "#475569"}, {"t": "11.2 app.test.mjs（58 个用例）", "c": [{"t": "知识点：组件挂载测试——用 jsdom 造假 DOM，把 createBlogApp 挂上去，注入假 api 和假 fetch，断言渲染结果和点击行为", "c": [], "color": "#475569"}], "color": "#475569"}, {"t": "11.3 jsdom-setup.mjs", "c": [{"t": "作用：在 Node 里搭一个最小浏览器环境：document、window、localStorage、fetch mock", "c": [], "color": "#475569"}], "color": "#475569"}, {"t": "11.4 为什么要工厂函数", "c": [{"t": "关键点：因为 app.js 只导出 createBlogApp 而不自动 mount，测试才能自己决定挂到哪、传什么依赖——这是可测性的前提", "c": [], "color": "#475569"}], "color": "#475569"}], "color": "#475569"}, {"t": "阶段十二：构建与部署", "c": [{"t": "12.1 根 pom.xml", "c": [{"t": "知识点：war 打包——packaging=war，mvn package 产出 target/blog.war，并把站点展开到 docs/", "c": [], "color": "#2563EB"}, {"t": "关键细节：这个工程没有一行 Java，pom 只是为了用 Maven 标准目录结构 + 标准命令", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "12.2 server/pom.xml", "c": [{"t": "依赖：spring-boot-starter-parent 3.5.x、spring-boot-starter-web、spring-boot-starter-jdbc、mysql-connector-j", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "12.3 pages.yml 工作流", "c": [{"t": "触发：push 到 main（或手动 workflow_dispatch）", "c": [], "color": "#2563EB"}, {"t": "三步：actions/checkout 拉代码 → upload-pages-artifact 只打包 src/main/webapp → deploy-pages 发布", "c": [], "color": "#2563EB"}, {"t": "关键细节：只发布前端目录，后端代码不进 Pages——因为 Pages 只能托管静态文件", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "12.4 线上只读的原因", "c": [{"t": "详细过程：线上没有 /api/health → detectMode() 返回 static → isReadOnly() 为 true → 编辑按钮隐藏", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "12.5 数据同步闭环", "c": [{"t": "步骤：本地 MySQL 改数据 → GET /api/export 导出 JSON → 覆盖 data/notes.json → git commit + push → Pages 自动部署", "c": [], "color": "#2563EB"}, {"t": "关键细节：漏掉 git push 这一步，线上就永远停在旧数据——**这是最容易忘的一环**", "c": [], "color": "#2563EB"}], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "阶段十三：代码级完整时序", "c": [{"t": "13.1 打开页面", "c": [{"t": "步骤：浏览器 GET / → WebConfig 返回 index.html → <script type=\"module\" src=\"js/main.js\"> → 浏览器按 import 图加载 7 个模块", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "13.2 main.js 挂载", "c": [{"t": "步骤：createBlogApp({ createApp }) → 内部 createApp({...}) 定义组件 → .mount('#app') → Vue 接管 DOM", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "13.3 init() 六步", "c": [{"t": "步骤：readCache → looksLikeNotes → applyNotes(缓存) → detectMode → fetchNotes → applyNotes(新数据) → refreshStats → loading=false", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "13.4 点分类", "c": [{"t": "步骤：点击标签 → selectCat(cat) → currentCat.value = cat → computed filtered 重算 → Vue 自动重渲染列表", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "13.5 新增笔记（本地）", "c": [{"t": "步骤：openAdd() → 填表单 → saveForm() → api.createNote() → ensureWritable 检查 → POST /api/notes → Service 六道校验 → Dao insert → MySQL → 返回 Note → applyNotes 刷新列表", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "13.6 删除笔记（本地）", "c": [{"t": "步骤：deleteNote() → 二次确认 → api.deleteNote(id) → DELETE /api/notes/{id} → Service 确认存在 → Dao deleteById → 204 → 前端移除该条", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "13.7 导出同步（线上更新）", "c": [{"t": "步骤：点导出 → api 请求 /api/export 或本地 downloadData → 得到 notes.json → 替换 data/notes.json → git push → Actions 部署 → 线上读新文件", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "13.8 静态模式下的降级", "c": [{"t": "步骤：detectMode 超时 → mode='static' → fetchNotes 读 data/notes.json → isReadOnly=true → 写按钮隐藏 → 顶部显示\"静态只读\"横幅", "c": [], "color": "#0E7490"}], "color": "#0E7490"}], "color": "#0E7490"}], "color": "#111827"};
+
+const FS   = {0:17, 1:13.5, 2:12, 3:11};
+const PADX = {0:22, 1:15, 2:12, 3:10};
+const PADY = {0:15, 1:10, 2:7.5, 3:6.5};
+const GAPY = {0:22, 1:9, 2:5, 3:4};
+const GAPX = {0:78, 1:52, 2:40, 3:34};
+const MAXW = {0:360, 1:300, 2:300, 3:400};
+const MAXL = {0:1, 1:2, 2:2, 3:3};
+
+function isCJK(ch){ return /[\u3000-\u303f\u4e00-\u9fff\uff00-\uffef]/.test(ch); }
+function textW(s, fs){ let w=0; for(const ch of s) w += isCJK(ch)?fs:fs*0.56; return w; }
+
+function wrap(text, level){
+  const fs = FS[level], budget = MAXW[level], maxL = MAXL[level];
+  const chars = [...text], lines = [];
+  let cur = "";
+  for (const ch of chars){
+    if (cur && textW(cur+ch, fs) > budget){
+      lines.push(cur); cur = ch;
+      if (lines.length >= maxL) break;
+    } else cur += ch;
+  }
+  if (lines.length < maxL && cur) lines.push(cur);
+  let used = lines.join("").length;
+  if (used < chars.length && lines.length){
+    let last = lines[lines.length-1];
+    while (last.length > 1 && textW(last+"…", fs) > budget) last = last.slice(0,-1);
+    lines[lines.length-1] = last + "…";
+  }
+  return lines;
+}
+
+const state = { collapsed:new Set(), scale:1, tx:0, ty:0, right:[], left:[], rootNode:null };
+
+/* ===== 学习状态标记：0=未标记 1=不会(红) 2=仅了解(黄) 3=理解(绿) ===== */
+const MARK_COLORS = ["#9ca3af", "#DC2626", "#F59E0B", "#16A34A"];
+const MARK_TINTS  = ["#ffffff", "#FEF2F2", "#FFFBEB", "#F0FDF4"];
+const MARK_NAMES  = ["未标记", "不会", "仅了解", "理解"];
+const LS_KEY = "mm-marks-blog-v1";
+try { state.marks = JSON.parse(localStorage.getItem(LS_KEY) || "{}") || {}; }
+catch (e) { state.marks = {}; }
+function saveMarks(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state.marks)); } catch(e){} }
+function markOf(n){ return state.marks[n._path] || 0; }
+function cycleMark(n){
+  const next = (markOf(n) + 1) % 4;
+  if (next === 0) delete state.marks[n._path];
+  else state.marks[n._path] = next;
+  saveMarks();
+  render(true);        // true = 保持当前缩放/平移，不重新适配
+  updateStats();
+}
+function updateStats(){
+  const c = [0,0,0,0];
+  const walk = (n) => { if (!(n.c && n.c.length)) c[markOf(n)]++; (n.c||[]).forEach(walk); };
+  walk(DATA);
+  const box = document.getElementById("stats");
+  if (!box) return;
+  box.innerHTML =
+      `<span><i class="dot" style="background:${MARK_COLORS[1]}"></i>不会 <b>${c[1]}</b></span>`
+    + `<span><i class="dot" style="background:${MARK_COLORS[2]}"></i>仅了解 <b>${c[2]}</b></span>`
+    + `<span><i class="dot" style="background:${MARK_COLORS[3]}"></i>理解 <b>${c[3]}</b></span>`
+    + `<span style="opacity:.65">未标记 <b>${c[0]}</b></span>`;
+}
+
+function measure(node, level, path){
+  node._level = level;
+  node._path = path;
+  node._lines = wrap(node.t, level);
+  node._w = Math.max(...node._lines.map(l => textW(l, FS[level]))) + PADX[level]*2;
+  node._h = node._lines.length * (FS[level]*1.4) + PADY[level]*2;
+  node._open = !state.collapsed.has(node) && node.c && node.c.length > 0;
+  if (node._open) node.c.forEach((ch,i) => measure(ch, level+1, path + "-" + i));
+}
+
+/* 一侧布局：dir=+1 向右，dir=-1 向左。返回该侧高度 */
+function layoutSide(nodes, dir, x0){
+  let cursor = 0;
+  function place(node, level, colX){
+    // colX: 该节点列的「锚点」：右向为左边缘，左向为右边缘
+    node._dir = dir;
+    if (dir > 0){ node._x = colX; }
+    else { node._x = colX - node._w; }
+    if (!node._open || !node.c || !node.c.length){
+      node._y = cursor;
+      cursor += node._h + GAPY[Math.min(level,3)];
+      return node._y + node._h/2;
+    }
+    const nextX = dir > 0
+      ? colX + node._w + GAPX[Math.min(level,3)]
+      : colX - node._w - GAPX[Math.min(level,3)];
+    const centers = node.c.map(ch => place(ch, level+1, nextX));
+    node._y = (Math.min(...centers) + Math.max(...centers))/2 - node._h/2;
+    return node._y + node._h/2;
+  }
+  nodes.forEach(st => place(st, 1, x0));
+  return { height: cursor };
+}
+
+function collect(node, out){
+  out.push(node);
+  if (node._open) node.c.forEach(ch => collect(ch, out));
+  return out;
+}
+
+function assignPaths(node, path){
+  node._path = path;
+  (node.c||[]).forEach((ch,i) => assignPaths(ch, path + "-" + i));
+}
+
+function build(){
+  // 0. 先给全部节点分配路径（折叠的也要有，否则标记会串号）
+  assignPaths(DATA, "r");
+  // 1. 测量
+  measure(DATA, 0, "r");
+  // 2. 分左右（交替）
+  const rightStages = [], leftStages = [];
+  DATA.c.forEach((st, i) => { (i % 2 === 0 ? rightStages : leftStages).push(st); });
+  // 3. 两侧布局（先在各自局部坐标）
+  const R = layoutSide(rightStages, +1, 0);
+  const L = layoutSide(leftStages, -1, 0);
+
+  // 左内侧的局部 x 范围：最右是 0，最左是负值
+  let leftMinX = 0, rightMaxX = 0;
+  const walkX = (n, pick) => { pick(n); if (n._open) n.c.forEach(ch => walkX(ch, pick)); };
+  leftStages.forEach(st => walkX(st, n => { leftMinX = Math.min(leftMinX, n._x); }));
+  rightStages.forEach(st => walkX(st, n => { rightMaxX = Math.max(rightMaxX, n._x + n._w); }));
+
+  const leftW = -leftMinX;
+  const gapR = GAPX[0], rootW = DATA._w;
+  // 水平位移：左侧整体平移到 0 起，根紧随其后
+  const shiftLeft = leftW;
+  const rootX = leftW + gapR;
+  const shiftRight = rootX + rootW + gapR;
+
+  const shiftSide = (stages, dx, dy) => {
+    stages.forEach(st => {
+      const walk = n => { n._x += dx; n._y += dy; if (n._open) n.c.forEach(walk); };
+      walk(st);
+    });
+  };
+
+  const H = Math.max(R.height, L.height);
+  // 垂直居中：两侧各自居中
+  const dyR = (H - R.height) / 2;
+  const dyL = (H - L.height) / 2;
+  shiftSide(rightStages, shiftRight, dyR);
+  shiftSide(leftStages, shiftLeft, dyL);
+
+  DATA._x = rootX;
+  DATA._y = H/2 - DATA._h/2;
+
+  // 收集所有可见节点
+  const nodes = [];
+  collect(DATA, nodes);
+
+  return { nodes, rootX, rootW, totalH: H };
+}
+
+/* ---------- 渲染 ---------- */
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("map");
+const scene = document.getElementById("scene");
+function el(tag, attrs){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+function render(keepView){
+  const keep = keepView ? { s:state.scale, x:state.tx, y:state.ty } : null;
+  const { nodes } = build();
+  scene.innerHTML = "";
+
+  const gE = el("g", {});
+  const drawEdge = (p, c) => {
+    const px = p._dir > 0 ? p._x + p._w : p._x;
+    const py = p._y + p._h/2;
+    const cx = c._dir > 0 ? c._x : c._x + c._w;
+    const cy = c._y + c._h/2;
+    const mx = (px + cx) / 2;
+    gE.appendChild(el("path", {
+      d:`M ${px} ${py} C ${mx} ${py}, ${mx} ${cy}, ${cx} ${cy}`,
+      fill:"none", stroke:c.color || "#9ca3af",
+      "stroke-width": c._level === 1 ? 2 : 1.2,
+      "stroke-linecap":"round",
+      opacity: c._level === 1 ? .9 : .5
+    }));
+  };
+  nodes.forEach(n => { if (n._open && n.c) n.c.forEach(ch => drawEdge(n, ch)); });
+  scene.appendChild(gE);
+
+  const gN = el("g", {});
+  nodes.forEach(n => {
+    const lv = n._level;
+    const g = el("g", { class:"node" });
+    const isRoot = lv === 0;
+    const isLeaf = !(n.c && n.c.length);
+    const mk = (!isRoot && isLeaf) ? markOf(n) : 0;
+    const fill0 = isRoot ? "#111827" : (lv === 1 ? (n.color || "#334155") : "#ffffff");
+    const stroke0 = isRoot ? "#111827" : (lv === 1 ? (n.color || "#334155")
+                   : (lv === 2 ? (n.color || "#d6d3ce") : (n.color || "#d6d3ce")));
+    const rect = el("rect", {
+      x:n._x, y:n._y, width:n._w, height:n._h,
+      rx: isRoot ? 12 : 8,
+      fill: mk ? MARK_TINTS[mk] : fill0,
+      stroke: mk ? MARK_COLORS[mk] : stroke0,
+      "stroke-width": mk ? 1.8 : (lv === 1 ? 0 : (lv === 2 ? 1.1 : 0.9)),
+      "stroke-opacity": mk ? 1 : (lv >= 3 ? .35 : 1)
+    });
+    if (lv === 2 && !mk) rect.setAttribute("stroke-opacity", ".55");
+    g.appendChild(rect);
+
+    const fs = FS[lv], lh = fs*1.4;
+    const totalH = n._lines.length * lh;
+    const startY = n._y + (n._h - totalH)/2 + lh/2;
+    n._lines.forEach((line, i) => {
+      const t = el("text", {
+        y: startY + i*lh,
+        "font-size": fs,
+        "font-weight": isRoot ? 800 : (lv === 1 ? 700 : (lv === 2 ? 600 : 400)),
+        fill: isRoot ? "#ffffff" : (lv === 1 ? "#ffffff" : (lv === 2 ? "#1f2937" : "#4b5563"))
+      });
+      if (n._dir > 0 && !isRoot){
+        t.setAttribute("x", n._x + PADX[lv]);
+        t.setAttribute("text-anchor", "start");
+      } else if (n._dir < 0 && !isRoot){
+        t.setAttribute("x", n._x + n._w - PADX[lv]);
+        t.setAttribute("text-anchor", "end");
+      } else {
+        t.setAttribute("x", n._x + PADX[lv]);
+        t.setAttribute("text-anchor", "start");
+      }
+      t.textContent = line;
+      g.appendChild(t);
+    });
+
+    if (n.c && n.c.length){
+      const cx = n._dir > 0 || isRoot ? n._x + n._w + 12 : n._x - 12;
+      const cy = n._y + n._h/2;
+      g.appendChild(el("circle", { cx, cy, r:7.5, fill:"#fff",
+        stroke:n.color || "#9ca3af", "stroke-width":1.2 }));
+      const tt = el("text", { x:cx, y:cy+0.5, "text-anchor":"middle",
+        "font-size":9.5, "font-weight":700, fill:n.color || "#9ca3af" });
+      tt.textContent = n._open ? "−" : String(n.c.length);
+      g.appendChild(tt);
+    } else {
+      /* ----- 叶子节点：学习状态小圆按钮 ----- */
+      const cx = (n._dir > 0 || isRoot) ? n._x + n._w + 12 : n._x - 12;
+      const cy = n._y + n._h/2;
+      const gm = el("g", { class:"mark" });
+      gm.appendChild(el("circle", {
+        cx, cy, r:8,
+        fill: mk ? MARK_COLORS[mk] : "#ffffff",
+        stroke: mk ? MARK_COLORS[mk] : "#c3c9d2",
+        "stroke-width": mk ? 1 : 1.3,
+        "stroke-dasharray": mk ? "0" : "2.2 2.2"
+      }));
+      if (mk){
+        const chk = el("text", {
+          x:cx, y:cy+0.6, "text-anchor":"middle",
+          "font-size":9, "font-weight":800, fill:"#ffffff"
+        });
+        chk.textContent = mk === 3 ? "✓" : (mk === 2 ? "~" : "✕");
+        gm.appendChild(chk);
+      }
+      const ttl = el("title", {});
+      ttl.textContent = `【${MARK_NAMES[mk]}】点击切换：不会 → 仅了解 → 理解 → 取消`;
+      gm.appendChild(ttl);
+      gm.addEventListener("click", ev => { ev.stopPropagation(); cycleMark(n); });
+      g.appendChild(gm);
+    }
+
+    const title = el("title", {}); title.textContent = n.t; g.appendChild(title);
+    g.addEventListener("click", ev => {
+      ev.stopPropagation();
+      if (n.c && n.c.length){
+        if (state.collapsed.has(n)) state.collapsed.delete(n); else state.collapsed.add(n);
+        render();
+      }
+    });
+    gN.appendChild(g);
+  });
+  scene.appendChild(gN);
+  if (keep){ state.scale = keep.s; state.tx = keep.x; state.ty = keep.y; apply(); }
+  else fit();
+  buildLegend();
+  updateStats();
+}
+
+/* ---------- 缩放/平移 ---------- */
+function apply(){
+  scene.setAttribute("transform", `translate(${state.tx},${state.ty}) scale(${state.scale})`);
+  document.getElementById("zoomval").textContent = Math.round(state.scale*100) + "%";
+}
+function fit(){
+  const bb = scene.getBBox();
+  if (!bb.width) return;
+  const W = svg.clientWidth, H = svg.clientHeight;
+  const padX = 70, padTop = 86, padBottom = 62;
+  const s = Math.min((W - padX*2)/bb.width, (H - padTop - padBottom)/bb.height, 1.25);
+  state.scale = Math.max(s, 0.1);
+  state.tx = (W - bb.width*state.scale)/2 - bb.x*state.scale;
+  state.ty = padTop + (H - padTop - padBottom - bb.height*state.scale)/2 - bb.y*state.scale;
+  apply();
+}
+
+svg.addEventListener("wheel", e => {
+  e.preventDefault();
+  const r = svg.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const k = e.deltaY < 0 ? 1.12 : 1/1.12;
+  const ns = Math.min(Math.max(state.scale*k, 0.06), 3);
+  const q = ns/state.scale;
+  state.tx = mx - (mx-state.tx)*q;
+  state.ty = my - (my-state.ty)*q;
+  state.scale = ns; apply();
+}, { passive:false });
+
+let drag=false, lx=0, ly=0;
+svg.addEventListener("mousedown", e => { drag=true; lx=e.clientX; ly=e.clientY; svg.classList.add("dragging"); });
+window.addEventListener("mousemove", e => {
+  if(!drag) return;
+  state.tx += e.clientX-lx; state.ty += e.clientY-ly; lx=e.clientX; ly=e.clientY; apply();
+});
+window.addEventListener("mouseup", () => { drag=false; svg.classList.remove("dragging"); });
+
+function buildLegend(){
+  const box = document.getElementById("legend"); box.innerHTML = "";
+  DATA.c.forEach(st => {
+    const s = document.createElement("span");
+    s.innerHTML = `<i style="background:${st.color}"></i>${st.t.split("：")[0]}`;
+    box.appendChild(s);
+  });
+}
+
+function setAll(fn){
+  const walk = (n, d) => { if (fn(n, d)) state.collapsed.add(n); else state.collapsed.delete(n);
+                           (n.c||[]).forEach(ch => walk(ch, d+1)); };
+  walk(DATA, 0);
+  state.collapsed.delete(DATA);
+  render();
+}
+document.getElementById("btn-expand").onclick = () => setAll(() => false);
+document.getElementById("btn-collapse").onclick = () => setAll((n,d) => d >= 1);
+document.getElementById("btn-items").onclick = () => setAll((n,d) => d >= 2);
+document.getElementById("btn-fit").onclick = () => render();
+document.getElementById("btn-in").onclick = () => { state.scale = Math.min(state.scale*1.18,3); apply(); };
+document.getElementById("btn-out").onclick = () => { state.scale = Math.max(state.scale/1.18,0.06); apply(); };
+document.getElementById("btn-reset").onclick = () => {
+  if (!confirm("确定清空所有学习状态标记？")) return;
+  state.marks = {}; saveMarks(); render(true); updateStats();
+};
+
+/* ===== 标记导出 / 导入：用于同步到 U 盘 ===== */
+function exportMarks(){
+  const keys = Object.keys(state.marks);
+  const payload = {
+    app: "前后端数据沟通全链路-学习标记",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    total: keys.length,
+    marks: state.marks
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const d = new Date();
+  const ymd = d.getFullYear() + "-" +
+              String(d.getMonth()+1).padStart(2,"0") + "-" +
+              String(d.getDate()).padStart(2,"0");
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "学习标记-" + ymd + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  alert("已导出 " + keys.length + " 条标记\n\n文件名：学习标记-" + ymd + ".json\n（在浏览器下载目录里）\n\n把它拷到 U 盘，换电脑时用「导入标记」恢复。");
+}
+
+function importMarks(file){
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const obj = JSON.parse(fr.result);
+      const marks = obj.marks || obj;
+      if (typeof marks !== "object" || marks === null || Array.isArray(marks)) throw new Error("不是有效的标记文件");
+      const keys = Object.keys(marks).filter(k => /^r(-\d+)+$/.test(k) && marks[k] >= 1 && marks[k] <= 3);
+      if (!keys.length) throw new Error("文件里没有可用的标记");
+      if (!confirm("将导入 " + keys.length + " 条标记。\n\n规则：同一知识点以导入文件为准，其余保留你当前的标记。\n\n继续？")) return;
+      keys.forEach(k => { state.marks[k] = marks[k]; });
+      saveMarks(); render(true); updateStats();
+      alert("导入完成。\n当前共 " + Object.keys(state.marks).length + " 条标记。");
+    } catch (e) {
+      alert("导入失败：" + e.message + "\n\n请确认选的是「导出标记」生成的 json 文件。");
+    }
+  };
+  fr.readAsText(file, "utf-8");
+}
+
+document.getElementById("btn-export").onclick = exportMarks;
+document.getElementById("btn-import").onclick = () => document.getElementById("file-import").click();
+document.getElementById("file-import").addEventListener("change", ev => {
+  const f = ev.target.files && ev.target.files[0];
+  if (f) importMarks(f);
+  ev.target.value = "";
+});
+
+
+/* 初始视图：默认「展开到环节」；可用 ?view=all|collapse|items 指定 */
+(function(){
+  state.collapsed.clear();
+  const v = (new URLSearchParams(location.search)).get("view") || "items";
+  const walk = (n, d) => { if (d >= 2) state.collapsed.add(n); (n.c||[]).forEach(ch => walk(ch, d+1)); };
+  if (v === "items"){
+    DATA.c.forEach(st => walk(st, 1));
+  } else if (v === "all"){
+    /* 什么都不折叠 */
+  } else if (v === "collapse"){
+    DATA.c.forEach(st => state.collapsed.add(st));
+  }
+})();
+render();
+window.addEventListener("resize", () => { clearTimeout(window._t); window._t = setTimeout(apply, 120); });
+</script>
+</body>
+</html>
