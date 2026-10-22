@@ -377,7 +377,7 @@ function render(keepView){
       ev.stopPropagation();
       if (n.c && n.c.length){
         if (state.collapsed.has(n)) state.collapsed.delete(n); else state.collapsed.add(n);
-        render();
+        renderKeepNode(n);
       }
     });
     gN.appendChild(g);
@@ -387,6 +387,18 @@ function render(keepView){
   else fit();
   buildLegend();
   updateStats();
+}
+
+/* ---------- 保持视图的局部重绘：展开/折叠后不重置缩放，且把被点的节点钉在原处 ---------- */
+function renderKeepNode(n){
+  if (!n || n._x == null || n._y == null){ render(true); return; }
+  const ax = state.tx + n._x * state.scale;
+  const ay = state.ty + n._y * state.scale;
+  render(true);
+  if (n._x == null || n._y == null) return;
+  state.tx += ax - (state.tx + n._x * state.scale);
+  state.ty += ay - (state.ty + n._y * state.scale);
+  apply();
 }
 
 /* ---------- 缩放/平移 ---------- */
