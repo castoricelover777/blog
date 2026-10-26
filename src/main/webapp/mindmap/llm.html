@@ -2,794 +2,797 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Python 数据分析（第 1~20 节）· 思维导图</title>
 <style>
-  :root{
-    --bg:#faf9f6; --ink:#111827; --muted:#6b7280;
-    --font:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
-    --shadow:0 1px 2px rgba(17,24,39,.05),0 10px 30px rgba(17,24,39,.07);
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;overflow:hidden}
-  body{
-    background:var(--bg); color:var(--ink); font-family:var(--font);
-    background-image:radial-gradient(circle at 1px 1px,#e6e3dc 1px,transparent 0);
-    background-size:24px 24px;
-  }
-  #app{position:fixed;inset:0}
+:root{
+  --bg:#faf9f6; --ink:#111827; --muted:#6b7280;
+  --line:#e2ded6; --panel:#ffffff;
+  --font:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Code","JetBrains Mono",Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);
+  background-image:radial-gradient(circle at 1px 1px,#e7e4dd 1px,transparent 0);
+  background-size:24px 24px}
 
-  .topbar{
-    position:fixed;top:0;left:0;right:0;height:60px;z-index:20;
-    display:flex;align-items:center;gap:16px;padding:0 20px;
-    background:linear-gradient(180deg,rgba(250,249,246,.97),rgba(250,249,246,.80));
-    backdrop-filter:blur(10px); border-bottom:1px solid #e8e5de;
-  }
-  .brand{display:flex;align-items:baseline;gap:9px}
-  .brand h1{margin:0;font-size:15.5px;font-weight:800;letter-spacing:.3px}
-  .brand .sub{font-size:11px;color:var(--muted);letter-spacing:.4px}
-  .spacer{flex:1}
-  .btns{display:flex;gap:6px;flex-wrap:wrap}
-  button{
-    font-family:inherit;font-size:12px;font-weight:600;color:#374151;
-    background:#fff;border:1px solid #dedad2;padding:6px 10px;border-radius:7px;
-    cursor:pointer;transition:.14s;box-shadow:0 1px 1px rgba(17,24,39,.03);
-  }
-  button:hover{background:#f2efe9;border-color:#c9c4ba}
-  .zoom{display:flex;align-items:center;border:1px solid #dedad2;border-radius:7px;overflow:hidden;background:#fff}
-  .zoom button{border:0;border-radius:0;box-shadow:none;padding:6px 9px}
-  .zoom .val{font-size:11px;color:var(--muted);padding:0 7px;min-width:42px;text-align:center}
+/* ================= 顶栏 ================= */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
+  gap:12px;padding:0 16px;height:58px;
+  background:linear-gradient(180deg,rgba(250,249,246,.97),rgba(250,249,246,.85));
+  backdrop-filter:blur(10px);border-bottom:1px solid #e8e5de}
+.brand{display:flex;align-items:baseline;gap:9px;min-width:0}
+.brand h1{margin:0;font-size:15px;font-weight:800;letter-spacing:.2px;white-space:nowrap}
+.brand .sub{font-size:11px;color:var(--muted);white-space:nowrap}
+.spacer{flex:1}
 
-  svg#map{width:100%;height:100%;display:block;cursor:grab}
-  svg#map.dragging{cursor:grabbing}
-  .node text{font-family:var(--font);dominant-baseline:middle;pointer-events:none}
-  .node{cursor:pointer}
+.seg{display:flex;background:#efece6;border:1px solid #dedad2;border-radius:8px;padding:2px;gap:2px;flex:none}
+.seg a{font-size:12px;font-weight:600;color:#6b7280;text-decoration:none;padding:5px 10px;
+  border-radius:6px;white-space:nowrap;transition:.15s}
+.seg a:hover{color:#374151}
+.seg a.on{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(17,24,39,.14)}
 
-  .hint{
-    position:fixed;left:20px;bottom:14px;z-index:20;font-size:11px;color:var(--muted);
-    background:rgba(255,255,255,.88);border:1px solid #e8e5de;padding:6px 11px;
-    border-radius:8px;box-shadow:var(--shadow);
-  }
-  .hint b{color:#374151}
-  .legend{
-    position:fixed;right:20px;bottom:14px;z-index:20;display:flex;gap:11px;flex-wrap:wrap;
-    max-width:56vw;font-size:10.5px;color:var(--muted);background:rgba(255,255,255,.88);
-    border:1px solid #e8e5de;padding:6px 11px;border-radius:8px;box-shadow:var(--shadow);
-  }
-  .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:0}
-  /* 学习状态 */
-  .stats{display:flex;gap:11px;align-items:center;font-size:11.5px;color:var(--muted);white-space:nowrap}
-  .stats b{color:#374151;font-weight:700}
-  .stats .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
-  .mark{cursor:pointer}
-  .mark:hover circle{stroke-width:2.4}
-  /* 视图切换 */
-  .seg{display:flex;background:#efece6;border:1px solid #dedad2;border-radius:8px;padding:2px;gap:2px}
-  .seg a{font-size:12px;font-weight:600;color:#6b7280;text-decoration:none;padding:5px 11px;border-radius:6px;transition:.15s;white-space:nowrap}
-  .seg a:hover{color:#374151;background:rgba(255,255,255,.6)}
-  .seg a.on{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(17,24,39,.14)}
+.btns{display:flex;gap:5px;flex:none}
+button{font-family:inherit;font-size:12px;font-weight:600;color:#374151;background:#fff;
+  border:1px solid #dedad2;padding:6px 10px;border-radius:7px;cursor:pointer;
+  transition:.14s;white-space:nowrap}
+button:hover{background:#f2efe9;border-color:#c9c4ba}
+.stats{display:flex;gap:10px;align-items:center;font-size:11px;color:var(--muted);flex:none}
+.stats b{color:#374151}
+.stats .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px}
+.zoom{display:flex;align-items:center;border:1px solid #dedad2;border-radius:7px;
+  overflow:hidden;background:#fff;flex:none}
+.zoom button{border:0;border-radius:0;padding:6px 8px}
+.zoom .val{font-size:11px;color:var(--muted);padding:0 6px;min-width:42px;text-align:center}
 
-  /* ============ 响应式：窄屏工具栏 ============ */
-  @media (max-width: 900px){
-    .topbar{height:auto;min-height:52px;flex-wrap:wrap;gap:5px;padding:6px 8px}
-    .brand h1{font-size:13px;letter-spacing:0}
-    .brand .sub{display:none}
-    button{font-size:11px;padding:5px 8px;border-radius:6px}
-    .seg a{font-size:11px;padding:4px 8px}
-    .stats{order:9;width:100%;justify-content:center;font-size:10px;gap:8px}
-    .legend{display:none}
-    .hint{left:8px;bottom:8px;font-size:10px;padding:4px 8px}
-  }
+/* ================= 画布 ================= */
+svg#map{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+svg#map.dragging{cursor:grabbing}
+.node text{font-family:var(--font);dominant-baseline:middle;pointer-events:none}
+.node{cursor:pointer}
+.hint{position:fixed;left:16px;bottom:14px;z-index:20;font-size:11px;color:var(--muted);
+  background:rgba(255,255,255,.9);border:1px solid #e8e5de;padding:6px 11px;border-radius:8px}
 
-  /* ============ 手机端：竖排大纲模式 ============ */
-  body.mobile #map{display:none}
-  body.mobile .zoom{display:none}
-  body.mobile #btn-fit{display:none}
-  body.mobile .hint{display:none}
-  body.mobile .legend{display:none}
-  body.mobile .topbar{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding:6px 8px}
-  body.mobile .topbar::-webkit-scrollbar{display:none}
-  body.mobile .btns{flex-wrap:nowrap}
-  body.mobile .spacer{display:none}
-  body.mobile .brand{flex:none}
-  body.mobile .stats{display:none}
-  #outline{
-    display:none; position:fixed; left:0; right:0; bottom:0;
-    overflow-y:auto; -webkit-overflow-scrolling:touch;
-    background:#faf9f6; padding:10px 10px 70px;
-    background-image:radial-gradient(circle at 1px 1px,#e7e4dd 1px,transparent 0);
-    background-size:24px 24px;
-  }
-  body.mobile #outline{display:block}
-  .oln{margin:3px 0}
-  .olrow{display:flex;align-items:flex-start;gap:7px;padding:8px 9px;
-    border-radius:8px;background:#fff;border:1px solid #e5e2db;
-    font-size:13px;line-height:1.5;color:#1f2937;cursor:pointer}
-  .olrow.lv0{background:#111827;color:#fff;border-color:#111827;font-weight:800;font-size:14px}
-  .olrow.lv1{color:#fff;border:none;font-weight:700;font-size:13.5px}
-  .olrow.lv2{font-weight:600;background:#fff}
-  .olrow.lv3{font-weight:400;font-size:12px;background:#f4f2ee;color:#4b5563}
-  .oltog{flex:none;min-width:20px;height:20px;border-radius:5px;background:rgba(0,0,0,.07);
-    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
-  .oltext{flex:1;word-break:break-word;padding-top:1px}
-  .olmk{flex:none;width:20px;height:20px;border-radius:50%;border-width:1.3px;
-    display:flex;align-items:center;justify-content:center;
-    font-size:10px;font-weight:800;color:#fff;margin-top:1px}
-  .olkids{margin-left:12px;border-left:2px solid rgba(0,0,0,.08);
-    padding-left:8px;margin-top:2px}
-/* === 移动端顶栏统一修复 v1 === */
+/* ================= 手机竖排大纲 ================= */
+#outline{display:none;position:fixed;left:0;right:0;bottom:0;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;background:#faf9f6;padding:8px 10px 70px;
+  background-image:radial-gradient(circle at 1px 1px,#e7e4dd 1px,transparent 0);
+  background-size:24px 24px;z-index:10}
+.oln{margin:3px 0}
+.olrow{display:flex;align-items:flex-start;gap:7px;padding:9px 10px;border-radius:9px;
+  background:#fff;border:1px solid #e5e2db;font-size:13.5px;line-height:1.5;color:#1f2937;cursor:pointer}
+.olrow.lv0{background:#111827;color:#fff;border-color:#111827;font-weight:800;font-size:14px}
+.olrow.lv1{color:#fff;border:none;font-weight:700}
+.olrow.lv2{font-weight:600}
+.oltog{flex:none;min-width:20px;height:20px;border-radius:5px;background:rgba(0,0,0,.07);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.oltext{flex:1;word-break:break-word;padding-top:1px}
+.olmk{flex:none;width:20px;height:20px;border-radius:50%;border-width:1.4px;
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;
+  color:#fff;margin-top:1px}
+.olkids{margin-left:12px;border-left:2px solid rgba(0,0,0,.08);padding-left:8px;margin-top:2px}
+
+/* ================= 详情面板 ================= */
+#mask{position:fixed;inset:0;background:rgba(17,24,39,.32);opacity:0;pointer-events:none;
+  transition:opacity .18s;z-index:40}
+body.panel-open #mask{opacity:1;pointer-events:auto}
+
+#panel{position:fixed;top:0;right:0;bottom:0;width:min(560px,94vw);z-index:50;
+  background:var(--panel);border-left:1px solid var(--line);
+  transform:translateX(102%);transition:transform .22s cubic-bezier(.3,.7,.3,1);
+  display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(17,24,39,.14)}
+body.panel-open #panel{transform:translateX(0)}
+
+.phead{flex:none;padding:16px 18px 12px;border-bottom:1px solid var(--line);
+  display:flex;align-items:flex-start;gap:10px}
+.pbadge{flex:none;font-size:10.5px;font-weight:700;color:#fff;padding:3px 8px;
+  border-radius:999px;margin-top:2px;white-space:nowrap}
+.ptitle{flex:1;margin:0;font-size:16px;font-weight:800;line-height:1.4;word-break:break-word}
+.pclose{flex:none;border:0;background:#f1efea;width:30px;height:30px;border-radius:8px;
+  font-size:18px;line-height:1;color:#6b7280;cursor:pointer}
+.pclose:hover{background:#e5e2db}
+
+.pbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 18px 40px}
+.pdesc{font-size:13.5px;line-height:1.85;color:#1f2937;margin:0 0 14px}
+.pdesc code{font-family:var(--mono);font-size:12px;background:#f1efea;padding:1px 5px;
+  border-radius:4px;color:#b91c1c}
+.pdesc strong{color:#111827;font-weight:700}
+
+.cb{margin:12px 0 16px;border-radius:10px;overflow:hidden;background:#0f172a;
+  box-shadow:0 2px 8px rgba(17,24,39,.12)}
+.cbh{display:flex;align-items:center;gap:8px;padding:7px 12px;background:#111c33;
+  border-bottom:1px solid rgba(255,255,255,.07)}
+.cblang{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  color:#7dd3fc}
+.cbcopy{margin-left:auto;font-size:10.5px;padding:3px 8px;border-radius:5px;cursor:pointer;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#cbd5e1}
+.cbcopy:hover{background:rgba(255,255,255,.16)}
+pre{margin:0;padding:12px 14px;overflow-x:auto}
+pre code{font-family:var(--mono);font-size:12px;line-height:1.65;color:#e2e8f0;
+  white-space:pre;display:block}
+/* 语法高亮配色（暗色） */
+pre .k{color:#c792ea}      /* 关键字 */
+pre .s{color:#c3e88d}      /* 字符串 */
+pre .n{color:#f78c6c}      /* 数字 */
+pre .c{color:#6b7d8f;font-style:italic}  /* 注释 */
+pre .b{color:#ffcb6b}      /* 内置函数 */
+pre .m{color:#82aaff}      /* 模块名 */
+
+/* ================= 响应式 ================= */
 @media (max-width: 900px){
-  .topbar{height:auto !important;min-height:auto;flex-wrap:wrap;gap:5px;
-          padding:6px 8px;overflow-x:hidden}
-  .brand{flex:1 0 100%;gap:6px}
-  .brand h1{font-size:13.5px;letter-spacing:0}
+  .topbar{height:auto;min-height:auto;flex-wrap:wrap;gap:5px;padding:6px 8px;overflow:hidden}
+  .brand{flex:1 0 100%;margin-bottom:2px}
+  .brand h1{font-size:13.5px}
   .brand .sub{display:none}
   .spacer{display:none}
-
-  /* 切换栏：独占一行，四项平分 */
-  .seg{order:1;flex:1 0 100%;display:flex;gap:4px;margin:0 0 3px}
-  .seg a{flex:1 1 0;text-align:center;font-size:11.5px;padding:6px 2px;
-         white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-  /* 按钮：第二行，横向可滚 */
-  .btns{order:2;flex:1 1 auto;flex-wrap:nowrap;overflow-x:auto;gap:4px;
-        -webkit-overflow-scrolling:touch}
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;width:100%;flex:none;
+    order:-1;padding:3px;box-sizing:border-box}
+  .seg a{text-align:center;padding:7px 2px;font-size:11.5px;min-width:0;
+    overflow:hidden;text-overflow:ellipsis}
+  .btns{flex-wrap:nowrap;overflow-x:auto;width:100%;gap:4px}
   .btns::-webkit-scrollbar{display:none}
-  button{font-size:11px;padding:5px 8px;border-radius:6px;white-space:nowrap;flex:none}
-  .zoom{order:3;flex:none}
-  .zoom .val{min-width:34px;font-size:10px}
-
-  .stats{order:9;flex:1 0 100%;justify-content:center;font-size:9.5px;gap:8px}
-  .legend{display:none}
-  .hint{left:8px;bottom:8px;font-size:10px;padding:4px 8px;max-width:calc(100% - 16px)}
-}
-@media (max-width: 420px){
-  .seg a{font-size:10.5px;padding:6px 1px}
-  .brand h1{font-size:12.5px}
-}
-/* === 移动端切换栏 grid 修复 v2 === */
-@media (max-width: 900px){
-  .topbar{flex-wrap:wrap !important;height:auto !important;overflow:visible !important;
-          padding:6px 8px !important;gap:5px !important}
-  .brand{flex:1 0 100% !important;margin-bottom:2px}
-  .spacer{display:none !important}
-
-  .seg{display:grid !important;grid-template-columns:repeat(4,1fr) !important;
-       gap:4px !important;width:100% !important;flex:1 0 100% !important;
-       order:-1 !important;padding:3px !important;box-sizing:border-box}
-  .seg a{min-width:0 !important;width:auto !important;flex:none !important;
-         text-align:center !important;padding:7px 2px !important;
-         font-size:11.5px !important;line-height:1.2;
-         white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-         background:transparent;border-radius:6px}
-  .seg a.on{background:#fff;box-shadow:0 1px 3px rgba(17,24,39,.14)}
-
-  .btns{flex-wrap:nowrap !important;overflow-x:auto !important;width:100%;
-        -webkit-overflow-scrolling:touch}
-  .btns::-webkit-scrollbar{display:none}
-  button{flex:none;font-size:11px;padding:5px 8px;white-space:nowrap}
-  .zoom{flex:none}
-  .stats{flex:1 0 100% !important;justify-content:center !important;
-         font-size:9.5px !important;gap:8px !important}
-  .legend{display:none !important}
-  .hint{font-size:10px;left:8px;bottom:8px;padding:4px 8px;max-width:calc(100% - 16px)}
-}
-@media (max-width: 420px){
-  .seg a{font-size:10.5px !important;padding:7px 1px !important}
+  button{font-size:11px;padding:5px 8px;flex:none}
+  .stats{width:100%;justify-content:center;font-size:9.5px;gap:8px}
+  .zoom{display:none}
+  .hint{display:none}
+  svg#map{display:none}
+  #outline{display:block}
+  #panel{width:100%;top:auto;bottom:0;height:88vh;border-left:0;
+    border-top:1px solid var(--line);border-radius:14px 14px 0 0;
+    transform:translateY(102%)}
+  body.panel-open #panel{transform:translateY(0)}
+  .pbody{padding-bottom:60px}
 }
 </style>
 </head>
 <body>
-<div id="app">
-  <div class="topbar">
-    <div class="brand">
-      <h1>Python 数据分析</h1>
-      <span class="sub">第 1~20 节 · 概述 + NumPy</span>
-    </div>
-    <div class="spacer"></div>
-    <div class="seg">
-      <a href="index.html">思维导图</a>
-      <a href="chain.html">长链图</a>
-      <a href="blog.html">博客源码</a>
-      <a class="on">数据分析</a>
-    </div>
-    <div class="btns">
-      <button id="btn-expand">全部展开</button>
-      <button id="btn-collapse">只看阶段</button>
-      <button id="btn-items">展开到环节</button>
-      <button id="btn-fit">适应窗口</button>
-    </div>
-    <div class="stats" id="stats"></div>
-      <button id="btn-export">导出标记</button>
-    <button id="btn-import">导入标记</button>
-    <input type="file" id="file-import" accept=".json,application/json" style="display:none">
-    <button id="btn-reset">清空标记</button>
-    <div class="zoom">
-      <button id="btn-out">−</button><span class="val" id="zoomval">100%</span><button id="btn-in">+</button>
-    </div>
+
+<div class="topbar">
+  <div class="brand">
+    <h1>Python 数据分析</h1>
+    <span class="sub">第 1~20 节 · 概述 + NumPy</span>
   </div>
-  <svg id="map"><g id="scene"></g></svg>
-  <div class="hint"><b>点击节点</b>展开/折叠 · <b>滚轮</b>缩放 · <b>拖拽</b>平移</div>
-  <div class="legend" id="legend"></div>
+  <div class="spacer"></div>
+  <div class="seg">
+    <a href="index.html">思维导图</a>
+    <a href="chain.html">长链图</a>
+    <a href="blog.html">博客源码</a>
+    <a class="on">数据分析</a>
+  </div>
+
+  <div class="btns">
+    <button id="btn-expand">全部展开</button>
+    <button id="btn-collapse">收起阶段</button>
+    <button id="btn-fit">适应窗口</button>
+    <button id="btn-export">导出标记</button>
+    <button id="btn-import">导入标记</button>
+    <button id="btn-reset">清空标记</button>
+    <input type="file" id="file-import" accept=".json,application/json" style="display:none">
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="zoom">
+    <button id="btn-out">−</button><span class="val" id="zoomval">100%</span><button id="btn-in">+</button>
+  </div>
 </div>
 
+<svg id="map"><g id="scene"></g></svg>
+<div id="outline"></div>
+<div class="hint">点知识点看详解 · 点阶段折叠 · 滚轮缩放 · 拖拽平移</div>
+
+<div id="mask"></div>
+<aside id="panel">
+  <div class="phead">
+    <span class="pbadge" id="pbadge"></span>
+    <h2 class="ptitle" id="ptitle"></h2>
+    <button class="pclose" id="pclose">×</button>
+  </div>
+  <div class="pbody" id="pbody"></div>
+</aside>
+
 <script>
-const DATA = {"t": "Python 数据分析（第 1~20 节）：概述 + NumPy", "c": [{"t": "阶段〇：全景速览（先建立全局认知）", "c": [{"t": "0.1 一句话主线", "c": [{"t": "读数据 → 算指标 → 画图表 → 讲结论；本版只覆盖其中「算」的底层引擎 NumPy，以及它前面的环境准备。", "c": [], "color": "#475569"}, {"t": "这门课的主线是「让 Python 替你处理表格」：NumPy 管多维数组计算，后面的 Pandas 管带标签的表格，Matplotlib/Seaborn 管出图。", "c": [], "color": "#475569"}], "color": "#475569"}, {"t": "0.2 三件套分工（本轮只学第一个）", "c": [{"t": "NumPy 负责算：ndarray 多维数组 + 矢量化运算，是整条链路的底层引擎。", "c": [], "color": "#475569"}, {"t": "Pandas 负责管：Series / DataFrame 带行标签与列名，能读写 CSV/Excel（第 22 节起）。", "c": [], "color": "#475569"}, {"t": "Matplotlib / Seaborn 负责画：底层可控 vs 统计图更漂亮（第 4 章）。", "c": [], "color": "#475569"}], "color": "#475569"}, {"t": "0.3 本轮覆盖进度", "c": [{"t": "视频共 69 节，本导图覆盖 **001 ~ 020 节**：第 1 章（概述与环境）+ 第 2 章（NumPy 全章到本章练习 1）。", "c": [], "color": "#475569"}, {"t": "对应代码：`代码/1.numpy学习.ipynb`（72 个 cell）。", "c": [], "color": "#475569"}], "color": "#475569"}, {"t": "0.4 为什么先学 NumPy", "c": [{"t": "Pandas 建在 NumPy 之上，ndarray 的属性、切片、广播这些概念会原样出现在 DataFrame 里。", "c": [], "color": "#475569"}, {"t": "NumPy 的数组比 Python list 快一到两个数量级——因为同类型 + 连续内存 + C 层运算。", "c": [], "color": "#475569"}], "color": "#475569"}], "color": "#475569"}, {"t": "阶段一：第 1 章 · 数据分析概述与环境搭建", "c": [{"t": "1.1 为什么要学数据分析", "c": [{"t": "数据量暴涨但信息密度低，需要工具把「原始记录」变成「可判断的指标」。", "c": [], "color": "#2563EB"}, {"t": "业务决策要有依据：不止「是多少」，还要「为什么」和「接下来怎么办」。", "c": [], "color": "#2563EB"}, {"t": "它也是机器学习与大模型的数据基础：脏数据直接决定模型上限。", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "1.2 学完能做什么", "c": [{"t": "数据清洗与整理、业务指标分析、可视化报表、A/B 测试分析。", "c": [], "color": "#2563EB"}, {"t": "往下走可接机器学习：特征工程、模型评估都依赖这套数据处理能力。", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "1.3 数据分析的完整流程", "c": [{"t": "六步：需求理解 → 数据采集 → 数据清洗 → 特征加工 → 分析建模 → 可视化汇报。", "c": [], "color": "#2563EB"}, {"t": "最容易低估的是第三步：真实数据几乎都要处理缺失值、重复值和类型错误。", "c": [], "color": "#2563EB"}, {"t": "每一步都有产出物：清洗后是干净数据集，分析后是指标表，最后是图表与结论。", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "1.4 数据分析工具链", "c": [{"t": "Python 作胶水语言，串起 Anaconda（环境）、Jupyter（交互式运行）、NumPy（计算）、Pandas（表格）、Matplotlib/Seaborn（绘图）。", "c": [], "color": "#2563EB"}, {"t": "为什么用 Python 而不是 Excel：数据量大、要复现、要写逻辑时，代码比手工操作可靠得多。", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "1.5 Anaconda 是什么", "c": [{"t": "集三件事于一身：包管理器 conda、环境管理器（多 Python 版本并存）、预装数百个科学计算库。", "c": [], "color": "#2563EB"}, {"t": "关键细节：用 conda 建独立环境能隔离依赖，避免不同项目之间版本打架。", "c": [], "color": "#2563EB"}, {"t": "常见坑：装完 Anaconda 后 PATH 冲突，导致 cmd 里 `python` 指向错版本；用 Anaconda Prompt 启动即可。", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "1.6 Jupyter 笔记本", "c": [{"t": "浏览器里的交互式笔记本，代码按 cell 分块执行，表格和图表直接嵌在页面里。", "c": [], "color": "#2563EB"}, {"t": "为什么分析场景离不开它：能边看中间结果边调整，不必反复重跑整个脚本。", "c": [], "color": "#2563EB"}, {"t": "同一个文件里可混写 markdown cell 写说明，天然适合做分析报告。", "c": [], "color": "#2563EB"}, {"t": "两种用法：本地 Jupyter（jupyter notebook 启动）；或在 PyCharm 里集成 Jupyter 解释器。", "c": [], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "1.7 Jupyter 快捷键", "c": [{"t": "Shift+Enter 运行并跳到下一块；Ctrl+Enter 原地运行。", "c": [], "color": "#2563EB"}, {"t": "命令模式（按 Esc 进入）：A 上方插入、B 下方插入、DD 删除、M 切 markdown、Y 切代码。", "c": [], "color": "#2563EB"}, {"t": "常见坑：在 markdown cell 里写代码执行不了，按 Y 切回 code 再运行。", "c": [], "color": "#2563EB"}], "color": "#2563EB"}], "color": "#2563EB"}, {"t": "阶段二：第 2 章 NumPy（一）· 数组基础", "c": [{"t": "2.1 NumPy 是什么", "c": [{"t": "Python 科学计算的基础包，核心是多维数组对象 ndarray 及其派生对象。", "c": [], "color": "#0E7490"}, {"t": "为什么不用 list：ndarray 同类型、连续内存、运算走 C 层且支持向量化，速度差一到两个数量级。", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "2.2 ndarray 的核心特性", "c": [{"t": "多维性：0 维标量、1 维向量、2 维矩阵、n 维张量，统一用同一套接口。", "c": [], "color": "#0E7490"}, {"t": "同质性：所有元素必须是同一 dtype——这是它快的原因，也是「不能混装」的代价。", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "2.3 ndarray 的属性", "c": [{"t": "shape 形状（几行几列）、ndim 维度数、size 元素总数。", "c": [], "color": "#0E7490"}, {"t": "dtype 元素类型、itemsize 每元素字节数、nbytes 总字节数（= size × itemsize）。", "c": [], "color": "#0E7490"}, {"t": "关键细节：shape 是元组，`arr.shape[0]` 取行数、`arr.shape[1]` 取列数。", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "2.4 ndarray 的创建方式", "c": [{"t": "从 Python 结构转换：`np.array([1,2,3])`，嵌套列表得到二维数组。", "c": [], "color": "#0E7490"}, {"t": "预定义形状：`np.zeros((2,3))`、`np.ones`、`np.full((2,2),7)`、`np.eye(3)` 单位阵。", "c": [], "color": "#0E7490"}, {"t": "按数值范围：`np.arange(1,10,2)` 左闭右开、`np.linspace(0,1,5)` 等距取 5 个点（含终点）。", "c": [], "color": "#0E7490"}, {"t": "特殊矩阵：对角阵、单位阵、全零阵；`np.zeros_like` 按已有数组形状造。", "c": [], "color": "#0E7490"}, {"t": "随机数组：`np.random.rand/randn`（0~1 均匀 / 标准正态）、`np.random.randint`（整数区间）。", "c": [], "color": "#0E7490"}, {"t": "常见坑：`arange` 不含终点而 `linspace` 含终点——两者极易混。", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "2.5 dtype 与类型转换", "c": [{"t": "常见类型：int32/int64、float32/float64、bool_、object。", "c": [], "color": "#0E7490"}, {"t": "转换用 `astype`：`arr.astype(np.float64)`；不转直接算，整数除法会丢小数。", "c": [], "color": "#0E7490"}, {"t": "关键细节：数值类型放不下会溢出或截断，不会报错——这类 bug 很隐蔽。", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "2.6 索引与切片", "c": [{"t": "切片语法 `start:stop:step`，左闭右开；省略端点表示从头 / 到尾。", "c": [], "color": "#0E7490"}, {"t": "布尔索引：`arr[arr > 30]` 直接筛出满足条件的元素。", "c": [], "color": "#0E7490"}, {"t": "二维切片：`arr[行切片, 列切片]`，逗号前后各管一个维度。", "c": [], "color": "#0E7490"}, {"t": "关键细节：切片返回的是**视图**（共享内存），改切片会改原数组；要独立副本用 `.copy()`。", "c": [], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "2.7 矢量化与广播", "c": [{"t": "矢量化：不用写循环，`arr * 2` 直接把运算作用到每个元素。", "c": [], "color": "#0E7490"}, {"t": "标量广播：标量与数组运算时，标量自动传播到所有元素。", "c": [], "color": "#0E7490"}, {"t": "广播三规则：维度少的在最左边补 1；某维度为 1 时沿该维度扩展；扩展后仍不匹配就报错。", "c": [], "color": "#0E7490"}, {"t": "常见坑：形状 `(3,)` 与 `(3,1)` 相加得到的是 `(3,3)` 而不是 `(3,)`——广播把两者都撑开了。", "c": [], "color": "#0E7490"}], "color": "#0E7490"}], "color": "#0E7490"}, {"t": "阶段三：第 2 章 NumPy（二）· 常用函数（015~020）", "c": [{"t": "3.1 基本数学函数（015）", "c": [{"t": "逐元素运算：`np.abs`、`np.sqrt`、`np.exp`、`np.log`、`np.power`。", "c": [], "color": "#7C3AED"}, {"t": "三角函数与取整：`np.sin/np.cos`、`np.floor/np.ceil/np.round`。", "c": [], "color": "#7C3AED"}, {"t": "关键细节：这些函数都是**逐元素**的，不是对数组整体求一个值。", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.2 统计函数与 axis（016）", "c": [{"t": "常用：`sum`、`mean`、`median`、`std`、`var`、`max`、`min`、`argmax`（最大值下标）。", "c": [], "color": "#7C3AED"}, {"t": "`axis=0` 按列统计（沿行方向压缩），`axis=1` 按行统计（沿列方向压缩）。", "c": [], "color": "#7C3AED"}, {"t": "记忆法：axis 是「要被压缩掉的那个轴」，比记行/列更不容易错。", "c": [], "color": "#7C3AED"}, {"t": "不传 axis 时默认对全部元素统计，得到单个标量。", "c": [], "color": "#7C3AED"}, {"t": "关键细节：含 NaN 时统计结果会变 NaN，要用 `np.nanmean/np.nansum` 这类跳过 NaN 的版本。", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.3 比较函数（017）", "c": [{"t": "直接比较得到布尔数组：`arr > 30`、`arr == 5`。", "c": [], "color": "#7C3AED"}, {"t": "`np.any` 只要有一个 True 就 True；`np.all` 全部 True 才 True，都支持 axis。", "c": [], "color": "#7C3AED"}, {"t": "`np.where(cond, a, b)` 相当于向量化的三元表达式，常用来做条件赋值。", "c": [], "color": "#7C3AED"}, {"t": "空数组注意：`np.any([])` 为 False，`np.all([])` 为 True（逻辑真空）。", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.4 排序函数（018）", "c": [{"t": "`np.sort(arr)` 返回**副本**，原数组不变；`arr.sort()` 是**就地**排序，直接改原数组。", "c": [], "color": "#7C3AED"}, {"t": "`argsort` 返回排序后的下标，用来「按一个字段的顺序去重排另一个字段」。", "c": [], "color": "#7C3AED"}, {"t": "axis 默认 -1（最后一个轴）；二维时 axis=0 按列排、axis=1 按行排。", "c": [], "color": "#7C3AED"}, {"t": "常见坑：把 `np.sort` 的返回值丢了又去看原数组，会以为没排上。", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.5 去重与集合函数", "c": [{"t": "`np.unique` 返回去重后的**有序**数组，配合 `return_counts=True` 拿每个值的出现次数。", "c": [], "color": "#7C3AED"}, {"t": "可类比集合运算：`np.intersect1d`（交集）、`np.union1d`（并集）、`np.setdiff1d`（差集）。", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.6 拼接与分割", "c": [{"t": "拼接：`np.concatenate`（沿已有轴）、`np.stack`（新增一个轴）、`np.hstack/vstack`。", "c": [], "color": "#7C3AED"}, {"t": "分割：`np.split`、`np.hsplit`、`np.vsplit`。", "c": [], "color": "#7C3AED"}, {"t": "关键细节：拼接要求非拼接轴的长度一致，否则直接报错。", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.7 NaN 与缺失值", "c": [{"t": "`np.isnan` 检测 NaN；NaN 与任何值比较（包括它自己）都为 False，所以不能用 `==` 判断。", "c": [], "color": "#7C3AED"}, {"t": "统计函数默认把 NaN 算进去得到 NaN，要用 `np.nanmean / np.nansum / np.nanstd` 跳过。", "c": [], "color": "#7C3AED"}, {"t": "填充：`np.nan_to_num` 可把 NaN 替换成 0 或指定值。", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.8 本章小结（019）", "c": [{"t": "三条最该记住的：**原地 vs 副本**（`x.sort()` 改原数组，`np.sort(x)` 返回副本）。", "c": [], "color": "#7C3AED"}, {"t": "**轴的方向**（axis 表示被压缩的轴，0 是列统计、1 是行统计）。", "c": [], "color": "#7C3AED"}, {"t": "**缺失值的传染性**（NaN 参与运算结果就是 NaN，必须用 nan 系列函数）。", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "3.9 本章练习（020）", "c": [{"t": "练习 1 温度分析：某城市一周最高温 `[28,30,29,31,32,30,29]`，求平均/最高/最低，并统计 >30℃ 的天数。", "c": [], "color": "#7C3AED"}, {"t": "解析：`np.mean` 求均值、`np.max/np.min` 求极值、`arr[arr > 30]` 用布尔索引筛选。", "c": [], "color": "#7C3AED"}, {"t": "练习 2 学生成绩：`[85,90,78,92,88]`，求平均分、中位数、标准差。", "c": [], "color": "#7C3AED"}, {"t": "解析：`np.mean / np.median / np.std`；标准差衡量的是成绩的离散程度，不是平均水平。", "c": [], "color": "#7C3AED"}], "color": "#7C3AED"}], "color": "#7C3AED"}, {"t": "阶段四：进度与后续路线", "c": [{"t": "4.1 本轮覆盖范围", "c": [{"t": "已覆盖 001~020 节：第 1 章（概述、Anaconda、Jupyter）+ 第 2 章（NumPy 数组与常用函数、本章小结、练习 1）。", "c": [], "color": "#C2410C"}, {"t": "对应 notebook：`1.numpy学习.ipynb`（ndarray 特性/属性/创建、常用函数）。", "c": [], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "4.2 下一站（021 起）", "c": [{"t": "021 本章练习 2：再用一组练习把 NumPy 敲熟。", "c": [], "color": "#C2410C"}, {"t": "022 起进入 Pandas：先 pandas 介绍，再到 Series、DataFrame、导入导出、清洗、分组聚合。", "c": [], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "4.3 后续章节预告（未学，仅标记位置）", "c": [{"t": "第 3 章 Pandas：Series / DataFrame / 数据清洗 / 时间处理 / groupby。", "c": [], "color": "#C2410C"}, {"t": "第 4 章 数据可视化：Matplotlib 两种接口、Seaborn 统计图、Pandas.plot、房地产市场分析实战。", "c": [], "color": "#C2410C"}], "color": "#C2410C"}, {"t": "4.4 学习建议", "c": [{"t": "NumPy 这部分别只读：每个函数都在 notebook 里敲一遍，尤其 `axis` 和「视图 vs 副本」这两处最容易想当然。", "c": [], "color": "#C2410C"}, {"t": "练习先自己写，再对照答案——本章两个练习覆盖的正是统计函数 + 布尔索引这两个高频点。", "c": [], "color": "#C2410C"}], "color": "#C2410C"}], "color": "#C2410C"}], "color": "#111827"};
+const DATA = {"t": "Python 数据分析（第 1~20 节）", "c": [{"t": "阶段〇 · 全景速览", "c": [{"t": "这门课在解决什么问题", "d": "数据分析要回答的是「数据说明了什么」。原始数据（CSV、Excel、数据库表）本身杂乱无章，需要一套流程把它变成可判断的指标与图表。这门课的主线是：读数据 → 清洗 → 算指标 → 出图 → 讲结论。整个工具链是分层的：NumPy 是底层计算引擎，Pandas 在其上提供带标签的表格，Matplotlib / Seaborn 负责把结果画出来。", "code": [], "color": "#475569", "c": []}, {"t": "三件套分工：算 / 管 / 画", "d": "记住分工就不会混：**NumPy 算**（ndarray、向量化、广播）、**Pandas 管**（Series/DataFrame、读写、清洗）、**Matplotlib/Seaborn 画**。Pandas 建在 NumPy 之上，所以 NumPy 的切片、axis、广播概念会原样出现在 DataFrame 里——先学 NumPy 不是绕远路，而是打地基。", "code": [{"lang": "python", "text": "import numpy as np              # 算：多维数组、向量化运算\nimport pandas as pd             # 管：带行标签/列名的表格\nimport matplotlib.pyplot as plt # 画：底层绘图，可控性最强\nimport seaborn as sns           # 画：统计图，接口更省事\n\narr = np.array([1, 2, 3])       # ndarray\ns   = pd.Series([1, 2, 3])      # 一维带标签\ndf  = pd.DataFrame({\"a\": [1, 2]})  # 二维表"}], "color": "#475569", "c": []}, {"t": "本轮覆盖范围（001~020 节）", "d": "课程共 69 节，本导图只覆盖前 20 节：第 1 章（数据分析概述、Anaconda、Jupyter）加上第 2 章 NumPy 全章（数组基础 + 常用函数 + 本章小结 + 本章练习 1）。Pandas 从第 22 节「pandas 介绍」开始，不在本轮范围内。对应代码是 `代码/1.numpy学习.ipynb`。", "code": [], "color": "#475569", "c": []}], "color": "#475569", "desc": ""}, {"t": "阶段一 · 第 1 章 概述与环境搭建", "c": [{"t": "数据分析的完整流程", "d": "六步：**需求理解 → 数据采集 → 数据清洗 → 特征加工 → 分析建模 → 可视化汇报**。新手最容易低估第三步——真实数据几乎一定有缺失值、重复值和类型错误，清洗往往占掉一半以上时间。每一步都有产出物：清洗后是干净数据集，分析后是指标表，最后才是图表与结论。", "code": [], "color": "#2563EB", "c": []}, {"t": "Anaconda：包管理 + 环境隔离", "d": "Anaconda 集三件事于一身：conda 包管理器、环境管理器、预装数百个科学计算库。**为什么必须用虚拟环境**：不同项目的依赖版本会打架，用 conda 建独立环境后互不干扰。注意 Windows 下装完 Anaconda 常出现 PATH 冲突（`python` 指向错版本），用 Anaconda Prompt 或 `conda init` 处理。", "code": [{"lang": "bash", "text": "# 建一个专用环境（指定 Python 版本）\nconda create -n da python=3.11 -y\n\n# 激活 / 退出\nconda activate da\nconda deactivate\n\n# 装依赖\nconda install numpy pandas matplotlib seaborn jupyter -y\n\n# 看所有环境\nconda env list"}], "color": "#2563EB", "c": []}, {"t": "Jupyter：交互式笔记本", "d": "Jupyter 是浏览器里的笔记本，代码按 cell 分块执行，表格和图表直接嵌在页面里。**为什么分析场景离不开它**：能边看中间结果边改下一步，不用反复重跑整个脚本。同一文件里可混写 markdown cell 记录思路，天然适合做分析报告。也可以在 PyCharm 里集成 Jupyter 解释器。", "code": [{"lang": "bash", "text": "pip install jupyter\njupyter notebook          # 启动，浏览器自动打开\njupyter lab               # 或启动新版 Lab 界面"}, {"lang": "python", "text": "# cell 内可直接查看对象，不用 print\nimport numpy as np\narr = np.arange(12).reshape(3, 4)\narr           # 单元格最后一行会被自动显示"}], "color": "#2563EB", "c": []}, {"t": "Jupyter 常用快捷键", "d": "两种模式：**编辑模式**（光标在 cell 里，可打字）与 **命令模式**（按 Esc 进入，快捷键生效）。最常用的是 Shift+Enter（运行并下移）和 A/B（上下插入）。最容易踩的坑：在 markdown cell 里写代码然后执行，什么都不发生——按 Y 切回 code 再运行。", "code": [{"lang": "text", "text": "Shift + Enter   运行当前 cell，并跳到下一个\nCtrl  + Enter   原地运行当前 cell\nAlt   + Enter   运行并下方插入新 cell\n\nEsc             进入命令模式\nA / B           在上方 / 下方插入 cell\nDD              删除当前 cell（连按两次 D）\nM / Y           切换 markdown / code\nZ               撤销删除\nShift + M       合并选中的 cell"}], "color": "#2563EB", "c": []}, {"t": "常见环境坑", "d": "三个高频问题：① **PATH 冲突**——命令行里 `python` 不是你以为的那个；② **内核选错**——notebook 里 `import numpy` 报 ModuleNotFound，多半是 kernel 指向了另一个 Python；③ **中文变方块**——绘图时没配中文字体。前两个用 `where python` / 切换 kernel 解决，第三个见可视化章节。", "code": [{"lang": "bash", "text": "where python            # Windows：看 python 到底指向哪个\nwhich python            # macOS / Linux\n\npython -c \"import sys; print(sys.executable)\"   # 当前解释器\njupyter kernelspec list                          # 已注册内核\n\n# CSV 读写中文乱码时，显式指定编码\n# pd.read_csv(\"data.csv\", encoding=\"utf-8\")  或  encoding=\"gbk\""}], "color": "#2563EB", "c": []}], "color": "#2563EB", "desc": ""}, {"t": "阶段二 · NumPy（一）数组基础", "c": [{"t": "ndarray 是什么", "d": "ndarray 是 NumPy 的核心对象：**N 维数组**，支持 0 维标量、1 维向量、2 维矩阵乃至 n 维张量。它有两个决定性能的特性：**多维性**（统一接口处理任意维度）和**同质性**（所有元素必须同一 dtype，因此连续内存 + C 层运算，比 Python list 快一到两个数量级）。同质性的代价是不能像 list 那样混装。", "code": [{"lang": "python", "text": "import numpy as np\n\na = np.array([1, 2, 3])\nprint(type(a))     # <class 'numpy.ndarray'>\nprint(a.dtype)     # int64\n\n# 同质性：混装会被统一成一种类型\nb = np.array([1, 2.5])\nprint(b.dtype)     # float64（整数被提升为浮点）\n\n# 多维\nprint(np.array([[1, 2], [3, 4]]).ndim)   # 2"}], "color": "#0E7490", "c": []}, {"t": "ndarray 的属性", "d": "六个属性必须记牢：`shape` 形状（几行几列）、`ndim` 维度数、`size` 元素总数、`dtype` 元素类型、`itemsize` 单元素字节数、`nbytes` 总字节数（= size × itemsize）。调试时先打印 shape，绝大多数报错都是形状对不上。", "code": [{"lang": "python", "text": "a = np.arange(6).reshape(2, 3)\n\na.shape      # (2, 3)\na.ndim       # 2\na.size       # 6\na.dtype      # int64\na.itemsize   # 8   （int64 是 8 字节）\na.nbytes     # 48  = size * itemsize\n\n# reshape 不改变数据，只改视图形状\na.reshape(3, 2)\na.reshape(-1)    # 拉平成一维，-1 表示自动推算"}], "color": "#0E7490", "c": []}, {"t": "ndarray 的创建方式", "d": "七类创建方式：从 Python 结构转换、预定义形状填充、按数值范围生成、特殊矩阵、随机数组、按已有数组形状创建、高级构造。**最易错的点**：`arange` 左闭右开不含终点，`linspace` 含终点。", "code": [{"lang": "python", "text": "np.array([1, 2, 3])              # 从列表\nnp.array([[1, 2], [3, 4]])        # 二维\n\nnp.zeros((2, 3))                  # 全 0 浮点\nnp.ones((2, 2), dtype=int)        # 全 1 整数\nnp.full((2, 3), 7)                # 填充固定值\nnp.eye(3)                         # 单位矩阵\nnp.zeros_like(a)                  # 按 a 的形状造全 0\n\nnp.arange(1, 10, 2)               # [1 3 5 7 9]      不含终点\nnp.linspace(0, 1, 5)              # [0.  .25 .5 .75 1.]  含终点\n\nnp.random.rand(2, 3)              # 0~1 均匀分布\nnp.random.randn(2, 3)             # 标准正态\nnp.random.randint(0, 10, (2, 3))  # 整数区间"}], "color": "#0E7490", "c": []}, {"t": "dtype 与类型转换", "d": "常用类型：`int8/16/32/64`、`float32/64`、`bool_`、`object`。转换用 `astype`。**最危险的一点**：数值超出类型范围时 NumPy **静默溢出**，不报错也不警告，结果是错的值——这类 bug 极难排查。做金融/统计计算默认用 float64，别省那点内存。", "code": [{"lang": "python", "text": "a = np.array([1, 2, 3], dtype=np.int32)\na.astype(np.float64)         # 转浮点\na.astype(str)                # 转字符串\n\n# ⚠ 静默溢出：不报错，但结果错了\nx = np.array([127], dtype=np.int8)\nx + 1                        # [-128]\n\n# 整数除法会得到浮点（Python3 语义）\nnp.array([1, 2, 3]) / 2      # [0.5 1.  1.5]"}], "color": "#0E7490", "c": []}, {"t": "索引与切片", "d": "语法 `start:stop:step`，左闭右开。三种索引要会：**基础切片**、**布尔索引**（`a[a > 5]`）、**花式索引**（用下标数组取值）。**最重要的坑**：切片返回的是**视图**（共享内存），改切片会改原数组；要独立副本必须 `.copy()`。二维切片写成 `m[行, 列]`，逗号前后各管一个维度。", "code": [{"lang": "python", "text": "a = np.arange(10)\na[2:5]        # [2 3 4]     左闭右开\na[::2]        # [0 2 4 6 8]\na[::-1]       # 倒序\na[a > 5]      # 布尔索引\n\nm = np.arange(6).reshape(2, 3)\nm[0, 1]       # 第 0 行第 1 列\nm[:, 1]       # 第 1 列\nm[0:2, 1:3]   # 子块\nm[[0, 1], [2, 1]]   # 花式索引\n\n# ⚠ 视图 vs 副本\nv = a[2:5]\nv[0] = 99\na[2]          # 99  ← 原数组被改了\na[2:5].copy() # 这才是独立副本"}], "color": "#0E7490", "c": []}, {"t": "矢量化与广播", "d": "矢量化：不用写循环，运算符直接作用到每个元素，底层是 C 循环，比 for 快得多。广播（broadcasting）：当两个数组形状不同时，NumPy 按三条规则自动扩展——① 维度少的在最左边补 1；② 某维度为 1 时沿该维度复制扩展；③ 扩展后仍不匹配就报错。**经典坑**：形状 `(3,)` 与 `(3,1)` 相加得到 `(3,3)`，而不是你以为的 `(3,)`。", "code": [{"lang": "python", "text": "a = np.array([1, 2, 3])\na * 2                          # [2 4 6]    标量广播\na + np.array([10, 20, 30])     # [11 22 33]\n\n# 广播：(2,1) 与 (3,) → (2,3)\ncol = np.array([[1], [2]])\nrow = np.array([1, 2, 3])\ncol + row\n# [[2 3 4]\n#  [3 4 5]]\n\n# 形状对不上时报错\n# np.array([1,2]) + np.array([1,2,3])   # ValueError"}], "color": "#0E7490", "c": []}], "color": "#0E7490", "desc": ""}, {"t": "阶段三 · NumPy（二）常用函数 015~020", "c": [{"t": "基本数学函数（015）", "d": "这些函数都是**逐元素**运算，不是对整体求一个值——区别就在于此。常用：`abs`、`sqrt`、`exp`、`log`、`power`，以及取整家族的 `floor/ceil/round`。注意 `np.round` 用「银行家舍入」（.5 取偶），和 Python 内置 `round` 一致。", "code": [{"lang": "python", "text": "a = np.array([1, 4, 9])\n\nnp.sqrt(a)          # [1. 2. 3.]\nnp.power(a, 2)      # [1 16 81]\nnp.abs(np.array([-1, -2, -3]))\nnp.exp(np.array([0, 1]))     # [1.         2.71828183]\nnp.log(np.array([1, np.e]))  # [0. 1.]\n\nnp.floor(np.array([1.7, -1.2]))   # [ 1. -2.]\nnp.ceil(np.array([1.2, -1.7]))    # [ 2. -1.]\nnp.round(np.array([1.25, 1.35]), 1)  # [1.2 1.4]  银行家舍入"}], "color": "#7C3AED", "c": []}, {"t": "统计函数与 axis（016）", "d": "常用统计量：`sum / mean / median / std / var / max / min / argmax`。**axis 是这一章最需要想清楚的东西**：把它理解成「要被压缩掉的那个轴」。二维数组 `axis=0` 沿行方向压缩 → 得到每列的结果；`axis=1` 沿列方向压缩 → 得到每行的结果。不传 axis 则对全部元素统计。含 NaN 时结果会变 NaN，要用 `nanmean/nansum` 系列。", "code": [{"lang": "python", "text": "m = np.array([[1, 2, 3],\n              [4, 5, 6]])\n\nm.sum()            # 21        全部元素\nm.sum(axis=0)      # [5 7 9]   按列（压缩掉行）\nm.sum(axis=1)      # [6 15]    按行（压缩掉列）\n\nm.mean()           # 3.5\nm.max(), m.min()   # 6, 1\nm.argmax()         # 5   （拉平后的下标）\nm.std()            # 标准差\n\n# NaN 会污染统计结果\na = np.array([1.0, np.nan, 3.0])\na.mean()           # nan\nnp.nanmean(a)      # 2.0"}], "color": "#7C3AED", "c": []}, {"t": "比较函数与 where（017）", "d": "比较运算返回**布尔数组**，可直接用作索引。`any` 任意一个为真即真，`all` 全部为真才真，都支持 axis。`np.where(条件, A, B)` 是向量化的三元表达式，做条件赋值时非常常用。两个边界情况：空数组 `any([])` 为 False、`all([])` 为 True（逻辑真空）。", "code": [{"lang": "python", "text": "a = np.array([85, 92, 78])\n\na > 90                 # [False  True False]\n(a > 80).all()         # True\n(a > 90).any()         # True\na[a > 90]              # [92]\n\n# 条件赋值\nnp.where(a >= 90, \"优\", \"良\")     # ['良' '优' '良']\n\n# 按轴判断\nm = np.array([[1, 2], [3, 4]])\n(m > 2).any(axis=0)    # [False  True]\n\nnp.any([])             # False\nnp.all([])             # True"}], "color": "#7C3AED", "c": []}, {"t": "排序函数（018）", "d": "两个函数的区别是本节点重点：`np.sort(a)` **返回副本**，原数组不变；`a.sort()` **就地排序**，直接改原数组。`argsort` 返回排序后的下标，用来「按一个键排另一个数组」。axis 默认 -1（最后一个轴）：二维时 `axis=0` 按列排、`axis=1` 按行排。", "code": [{"lang": "python", "text": "a = np.array([3, 1, 2])\n\nnp.sort(a)     # [1 2 3]   ← 返回值是副本\na              # [3 1 2]   ← 原数组没变\n\na.sort()       # 就地排序，无返回值\na              # [1 2 3]\n\n# argsort：拿排序后的下标\nidx = np.argsort(np.array([30, 10, 20]))   # [1 2 0]\nnames = np.array([\"A\", \"B\", \"C\"])\nnames[idx]                                 # ['B' 'C' 'A']\n\n# 沿轴排序\nm = np.array([[3, 1], [2, 4]])\nnp.sort(m, axis=0)   # 按列排\nnp.sort(m, axis=1)   # 按行排"}], "color": "#7C3AED", "c": []}, {"t": "去重与集合运算", "d": "`np.unique` 返回**去重且有序**的数组，加 `return_counts=True` 可同时拿到每个值的出现次数（等价于 Pandas 的 value_counts，但作用在数组上）。另外 NumPy 提供集合运算：`intersect1d` 交集、`union1d` 并集、`setdiff1d` 差集。", "code": [{"lang": "python", "text": "a = np.array([3, 1, 3, 2, 1])\n\nnp.unique(a)                       # [1 2 3]\n\nvals, cnt = np.unique(a, return_counts=True)\n# vals = [1 2 3]\n# cnt  = [2 1 2]\n\nnp.intersect1d([1, 2, 3], [2, 3, 4])   # [2 3]\nnp.union1d([1, 2], [2, 3])             # [1 2 3]\nnp.setdiff1d([1, 2, 3], [2])           # [1 3]"}], "color": "#7C3AED", "c": []}, {"t": "拼接与分割", "d": "拼接三兄弟：`concatenate` 沿已有轴接、`stack` 新增一个轴、`hstack/vstack` 是水平/垂直的便捷写法。分割用 `split`。**约束**：拼接时非拼接轴的长度必须一致，否则直接报错——遇到 shape mismatch 先回头检查这一步。", "code": [{"lang": "python", "text": "a = np.array([1, 2])\nb = np.array([3, 4])\n\nnp.concatenate([a, b])     # [1 2 3 4]\nnp.stack([a, b])           # shape (2, 2)\nnp.vstack([a, b])          # 垂直堆叠 → (2, 2)\nnp.hstack([a, b])          # 水平拼接 → (4,)\n\nm1 = np.array([[1, 2]])\nm2 = np.array([[3, 4]])\nnp.concatenate([m1, m2], axis=0)   # 按行方向接\n\nnp.split(np.arange(6), 3)  # 三等分"}], "color": "#7C3AED", "c": []}, {"t": "NaN 缺失值处理", "d": "NaN 是「Not a Number」，代表缺失。**两条铁律**：① NaN 与任何值比较（包括它自己）都为 False，所以判断必须用 `np.isnan`；② 统计函数默认把 NaN 算进去，结果就是 NaN，要用 `np.nanmean / np.nansum / np.nanstd` 这类「跳过 NaN」的版本。填充可用 `np.nan_to_num`（默认换 0，也可指定值）。", "code": [{"lang": "python", "text": "a = np.array([1.0, np.nan, 3.0])\n\nnp.isnan(a)        # [False  True False]\na == np.nan        # [False False False]  ← 永远 False\n\na.mean()           # nan\nnp.nanmean(a)      # 2.0\nnp.nansum(a)       # 4.0\n\nnp.nan_to_num(a)                  # [1. 0. 3.]\nnp.nan_to_num(a, nan=-1)          # [ 1. -1.  3.]\n\n# 用中位数填充（比均值抗异常值）\nnp.where(np.isnan(a), np.nanmedian(a), a)"}], "color": "#7C3AED", "c": []}, {"t": "本章小结与练习 019 / 020", "d": "本章最该带走的三条：**原地 vs 副本**（`x.sort()` 改原数组，`np.sort(x)` 返回副本）、**axis 的方向**（表示被压缩的轴）、**NaN 的传染性**（参与运算结果即 NaN）。练习 1 是气温统计、练习 2 是成绩统计，两者覆盖的正是「统计函数 + 布尔索引」这两个高频点。", "code": [{"lang": "python", "text": "# 练习1：一周最高气温，求平均/最高/最低，统计 >30℃ 天数\nt = np.array([28, 30, 29, 31, 32, 30, 29])\n\nnp.mean(t)                 # 29.857...\nnp.max(t), np.min(t)       # 32, 28\n(t > 30).sum()             # 2\nt[t > 30]                  # [31 32]\n\n# 练习2：5 名学生成绩，求平均分/中位数/标准差\ns = np.array([85, 90, 78, 92, 88])\n\ns.mean()       # 86.6\nnp.median(s)   # 88.0\ns.std()        # 5.02...  标准差衡量离散程度，不是平均水平"}], "color": "#7C3AED", "c": []}], "color": "#7C3AED", "desc": ""}, {"t": "阶段四 · 进度与后续", "c": [{"t": "本轮进度", "d": "已覆盖 001~020 节：第 1 章（概述、Anaconda、Jupyter、环境坑）与第 2 章 NumPy 全章（数组基础、常用函数、本章小结、本章练习 1）。对应代码为 `代码/1.numpy学习.ipynb`（72 个 cell）。", "code": [], "color": "#C2410C", "c": []}, {"t": "下一站：021 练习2 → 022 Pandas", "d": "021 是本章练习 2，再用一组题把 NumPy 敲熟；022 起进入 Pandas。Pandas 的两大结构是 Series（一维带标签）和 DataFrame（二维表），后面还有数据清洗、时间处理、groupby 分组聚合，以及第 4 章的数据可视化。", "code": [], "color": "#C2410C", "c": []}, {"t": "学习建议", "d": "NumPy 别只读不写：每个函数都在 notebook 里敲一遍，重点亲手验证 `axis` 的方向和「视图 vs 副本」这两处。练习先自己写再看答案。真正的分水岭不是记住了多少 API，而是遇到 shape mismatch 时能自己定位。", "code": [], "color": "#C2410C", "c": []}], "color": "#C2410C", "desc": ""}], "color": "#111827"};
 
-const FS   = {0:17, 1:13.5, 2:12, 3:11};
-const PADX = {0:22, 1:15, 2:12, 3:10};
-const PADY = {0:15, 1:10, 2:7.5, 3:6.5};
-const GAPY = {0:22, 1:9, 2:5, 3:4};
-const GAPX = {0:78, 1:52, 2:40, 3:34};
-const MAXW = {0:360, 1:300, 2:300, 3:400};
-const MAXL = {0:99, 1:99, 2:99, 3:99};   // 不再截断：文字按需换行，全部显示（原来是 1/2/2/3 行，超出加省略号）
-
-function isCJK(ch){ return /[\u3000-\u303f\u4e00-\u9fff\uff00-\uffef]/.test(ch); }
-function textW(s, fs){ let w=0; for(const ch of s) w += isCJK(ch)?fs:fs*0.56; return w; }
-
-function wrap(text, level){
-  const fs = FS[level], budget = MAXW[level], maxL = MAXL[level];
-  const chars = [...text], lines = [];
-  let cur = "";
-  for (const ch of chars){
-    if (cur && textW(cur+ch, fs) > budget){
-      lines.push(cur); cur = ch;
-      if (lines.length >= maxL) break;
-    } else cur += ch;
-  }
-  if (lines.length < maxL && cur) lines.push(cur);
-  let used = lines.join("").length;
-  if (used < chars.length && lines.length){
-    let last = lines[lines.length-1];
-    while (last.length > 1 && textW(last+"…", fs) > budget) last = last.slice(0,-1);
-    lines[lines.length-1] = last + "…";
-  }
-  return lines;
-}
-
-const state = { collapsed:new Set(), scale:1, tx:0, ty:0, right:[], left:[], rootNode:null };
-
-/* ===== 学习状态标记：0=未标记 1=不会(红) 2=仅了解(黄) 3=理解(绿) ===== */
+/* ================= 通用 ================= */
 const MARK_COLORS = ["#9ca3af", "#DC2626", "#F59E0B", "#16A34A"];
 const MARK_TINTS  = ["#ffffff", "#FEF2F2", "#FFFBEB", "#F0FDF4"];
 const MARK_NAMES  = ["未标记", "不会", "仅了解", "理解"];
-const LS_KEY = "mm-marks-llm-v1";
-/* ===== 作者内置标记：首次访问时作为初始状态，清空后不再自动恢复 ===== */
-const MARK_DEFAULTS = {};
-const LS_SEEDED = "mm-marks-seeded-v1";
-function seedAuthorMarks(){
-  try{
-    if (localStorage.getItem(LS_SEEDED)) return 0;
-    if (Object.keys(state.marks).length){ localStorage.setItem(LS_SEEDED, "1"); return 0; }
-    const keys = Object.keys(MARK_DEFAULTS || {});
-    if (!keys.length){ localStorage.setItem(LS_SEEDED, "1"); return 0; }
-    state.marks = JSON.parse(JSON.stringify(MARK_DEFAULTS));
-    saveMarks();
-    localStorage.setItem(LS_SEEDED, "1");
-    return keys.length;
-  }catch(e){ return 0; }
-}
-function loadAuthorMarks(){
-  const keys = Object.keys(MARK_DEFAULTS || {});
-  if (!keys.length){ alert("这个页面没有内置标记数据。"); return; }
-  if (Object.keys(state.marks).length &&
-      !confirm("会用作者内置的 " + keys.length + " 条标记覆盖你当前的标记，继续？")) return;
-  state.marks = JSON.parse(JSON.stringify(MARK_DEFAULTS));
-  saveMarks();
-  localStorage.setItem(LS_SEEDED, "1");
-  render(true); updateStats();
-}
-try { state.marks = JSON.parse(localStorage.getItem(LS_KEY) || "{}") || {}; }
-catch (e) { state.marks = {}; }
-function saveMarks(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state.marks)); } catch(e){} }
-function markOf(n){ return state.marks[n._path] || 0; }
-function cycleMark(n){
-  const next = (markOf(n) + 1) % 4;
-  if (next === 0) delete state.marks[n._path];
-  else state.marks[n._path] = next;
-  saveMarks();
-  render(true);        // true = 保持当前缩放/平移，不重新适配
-  updateStats();
-}
-function updateStats(){
-  const c = [0,0,0,0];
-  const walk = (n) => { if (!(n.c && n.c.length)) c[markOf(n)]++; (n.c||[]).forEach(walk); };
-  walk(DATA);
-  const box = document.getElementById("stats");
-  if (!box) return;
-  box.innerHTML =
-      `<span><i class="dot" style="background:${MARK_COLORS[1]}"></i>不会 <b>${c[1]}</b></span>`
-    + `<span><i class="dot" style="background:${MARK_COLORS[2]}"></i>仅了解 <b>${c[2]}</b></span>`
-    + `<span><i class="dot" style="background:${MARK_COLORS[3]}"></i>理解 <b>${c[3]}</b></span>`
-    + `<span style="opacity:.65">未标记 <b>${c[0]}</b></span>`;
-}
+const LS_KEY = "mm-marks-llm-v2";
+const state = { collapsed:new Set(), marks:{}, scale:1, tx:0, ty:0, openItem:null };
 
-function measure(node, level, path){
-  node._level = level;
-  node._path = path;
-  node._lines = wrap(node.t, level);
-  node._w = Math.max(...node._lines.map(l => textW(l, FS[level]))) + PADX[level]*2;
-  node._h = node._lines.length * (FS[level]*1.4) + PADY[level]*2;
-  node._open = !state.collapsed.has(node) && node.c && node.c.length > 0;
-  if (node._open) node.c.forEach((ch,i) => measure(ch, level+1, path + "-" + i));
-}
+try { state.marks = JSON.parse(localStorage.getItem(LS_KEY) || "{}") || {}; } catch(e){}
 
-/* 一侧布局：dir=+1 向右，dir=-1 向左。返回该侧高度 */
-function layoutSide(nodes, dir, x0){
-  let cursor = 0;
-  function place(node, level, colX){
-    // colX: 该节点列的「锚点」：右向为左边缘，左向为右边缘
-    node._dir = dir;
-    if (dir > 0){ node._x = colX; }
-    else { node._x = colX - node._w; }
-    if (!node._open || !node.c || !node.c.length){
-      node._y = cursor;
-      cursor += node._h + GAPY[Math.min(level,3)];
-      return node._y + node._h/2;
+const isMobile = () => window.innerWidth <= 900;
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+function saveMarks(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state.marks)); }catch(e){} }
+
+/* 路径：r-阶段序号-知识点序号 */
+function assignPaths(){
+  DATA._p = "r";
+  DATA.c.forEach((st,i)=>{
+    st._p = "r-" + i;
+    st.c.forEach((it,j)=>{ it._p = "r-" + i + "-" + j; });
+  });
+}
+assignPaths();
+
+function markOf(n){ return state.marks[n._p] || 0; }
+
+/* ================= 语法高亮（无外部依赖） ================= */
+const KW = {
+  python: "and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield None True False".split(" "),
+  sql: "select from where group by having order limit insert into values update set delete create table drop alter join left right inner on and or not null distinct count sum avg max min desc asc as".split(" "),
+  bash: "conda pip python jupyter where which cd ls export echo source git".split(" "),
+  text: [].concat()
+};
+const BI = "print len range list dict set tuple int float str bool sum min max sorted enumerate zip open abs round type isinstance map filter".split(" ");
+const MOD = ["np","pd","plt","sns","os","sys"];
+
+function highlight(code, lang){
+  const kw = new Set(KW[lang] || []);
+  const bi = new Set(BI);
+  const mod = new Set(MOD);
+  let out = "", i = 0;
+  while (i < code.length){
+    const rest = code.slice(i);
+    let m;
+    // 字符串
+    if ((m = rest.match(/^(\x22\x22\x22[\s\S]*?\x22\x22\x22|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/))){
+      out += '<span class="s">' + esc(m[1]) + '</span>'; i += m[1].length; continue;
     }
-    const nextX = dir > 0
-      ? colX + node._w + GAPX[Math.min(level,3)]
-      : colX - node._w - GAPX[Math.min(level,3)];
-    const centers = node.c.map(ch => place(ch, level+1, nextX));
-    node._y = (Math.min(...centers) + Math.max(...centers))/2 - node._h/2;
-    return node._y + node._h/2;
+    // 注释
+    if ((m = rest.match(lang === "sql" ? /^(--[^\n]*)/ : /^(#[^\n]*)/))){
+      out += '<span class="c">' + esc(m[1]) + '</span>'; i += m[1].length; continue;
+    }
+    // 数字
+    if ((m = rest.match(/^(\d+(?:\.\d+)?)/))){
+      out += '<span class="n">' + m[1] + '</span>'; i += m[1].length; continue;
+    }
+    // 标识符
+    if ((m = rest.match(/^([A-Za-z_][A-Za-z0-9_]*)/))){
+      const w = m[1];
+      let cls = null;
+      if (kw.has(w.toLowerCase()) && (lang !== "python" || kw.has(w))) cls = "k";
+      else if (kw.has(w)) cls = "k";
+      else if (mod.has(w)) cls = "m";
+      else if (bi.has(w)) cls = "b";
+      out += cls ? '<span class="' + cls + '">' + esc(w) + '</span>' : esc(w);
+      i += w.length; continue;
+    }
+    out += esc(code[i]); i++;
   }
-  nodes.forEach(st => place(st, 1, x0));
-  return { height: cursor };
-}
-
-function collect(node, out){
-  out.push(node);
-  if (node._open) node.c.forEach(ch => collect(ch, out));
   return out;
 }
 
-function assignPaths(node, path){
-  node._path = path;
-  (node.c||[]).forEach((ch,i) => assignPaths(ch, path + "-" + i));
-}
+/* ================= 详情面板 ================= */
+const panel = document.getElementById("panel");
+const pbody = document.getElementById("pbody");
 
-function build(){
-  // 0. 先给全部节点分配路径（折叠的也要有，否则标记会串号）
-  assignPaths(DATA, "r");
-  // 1. 测量
-  measure(DATA, 0, "r");
-  // 2. 分左右（交替）
-  const rightStages = [], leftStages = [];
-  DATA.c.forEach((st, i) => { (i % 2 === 0 ? rightStages : leftStages).push(st); });
-  // 3. 两侧布局（先在各自局部坐标）
-  const R = layoutSide(rightStages, +1, 0);
-  const L = layoutSide(leftStages, -1, 0);
+function openPanel(item, stage){
+  state.openItem = item;
+  document.getElementById("pbadge").textContent = stage.t.replace(/^阶段[〇一二三四五六七八九十]+ · /, "");
+  document.getElementById("pbadge").style.background = item.color || "#475569";
+  document.getElementById("ptitle").textContent = item.t;
 
-  // 左内侧的局部 x 范围：最右是 0，最左是负值
-  let leftMinX = 0, rightMaxX = 0;
-  const walkX = (n, pick) => { pick(n); if (n._open) n.c.forEach(ch => walkX(ch, pick)); };
-  leftStages.forEach(st => walkX(st, n => { leftMinX = Math.min(leftMinX, n._x); }));
-  rightStages.forEach(st => walkX(st, n => { rightMaxX = Math.max(rightMaxX, n._x + n._w); }));
+  let html = "";
+  const mk = markOf(item);
+  html += '<p class="pdesc">' + mdInline(item.d || "") + '</p>';
 
-  const leftW = -leftMinX;
-  const gapR = GAPX[0], rootW = DATA._w;
-  // 水平位移：左侧整体平移到 0 起，根紧随其后
-  const shiftLeft = leftW;
-  const rootX = leftW + gapR;
-  const shiftRight = rootX + rootW + gapR;
-
-  const shiftSide = (stages, dx, dy) => {
-    stages.forEach(st => {
-      const walk = n => { n._x += dx; n._y += dy; if (n._open) n.c.forEach(walk); };
-      walk(st);
-    });
-  };
-
-  const H = Math.max(R.height, L.height);
-  // 垂直居中：两侧各自居中
-  const dyR = (H - R.height) / 2;
-  const dyL = (H - L.height) / 2;
-  shiftSide(rightStages, shiftRight, dyR);
-  shiftSide(leftStages, shiftLeft, dyL);
-
-  DATA._x = rootX;
-  DATA._y = H/2 - DATA._h/2;
-
-  // 收集所有可见节点
-  const nodes = [];
-  collect(DATA, nodes);
-
-  return { nodes, rootX, rootW, totalH: H };
-}
-
-/* ---------- 渲染 ---------- */
-const NS = "http://www.w3.org/2000/svg";
-const svg = document.getElementById("map");
-const scene = document.getElementById("scene");
-function el(tag, attrs){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
-
-function render(keepView){
-  const keep = keepView ? { s:state.scale, x:state.tx, y:state.ty } : null;
-  const { nodes } = build();
-  scene.innerHTML = "";
-
-  const gE = el("g", {});
-  const drawEdge = (p, c) => {
-    const px = p._dir > 0 ? p._x + p._w : p._x;
-    const py = p._y + p._h/2;
-    const cx = c._dir > 0 ? c._x : c._x + c._w;
-    const cy = c._y + c._h/2;
-    const mx = (px + cx) / 2;
-    gE.appendChild(el("path", {
-      d:`M ${px} ${py} C ${mx} ${py}, ${mx} ${cy}, ${cx} ${cy}`,
-      fill:"none", stroke:c.color || "#9ca3af",
-      "stroke-width": c._level === 1 ? 2 : 1.2,
-      "stroke-linecap":"round",
-      opacity: c._level === 1 ? .9 : .5
-    }));
-  };
-  nodes.forEach(n => { if (n._open && n.c) n.c.forEach(ch => drawEdge(n, ch)); });
-  scene.appendChild(gE);
-
-  const gN = el("g", {});
-  nodes.forEach(n => {
-    const lv = n._level;
-    const g = el("g", { class:"node" });
-    const isRoot = lv === 0;
-    const isLeaf = !(n.c && n.c.length);
-    const mk = (!isRoot && isLeaf) ? markOf(n) : 0;
-    const fill0 = isRoot ? "#111827" : (lv === 1 ? (n.color || "#334155") : "#ffffff");
-    const stroke0 = isRoot ? "#111827" : (lv === 1 ? (n.color || "#334155")
-                   : (lv === 2 ? (n.color || "#d6d3ce") : (n.color || "#d6d3ce")));
-    const rect = el("rect", {
-      x:n._x, y:n._y, width:n._w, height:n._h,
-      rx: isRoot ? 12 : 8,
-      fill: mk ? MARK_TINTS[mk] : fill0,
-      stroke: mk ? MARK_COLORS[mk] : stroke0,
-      "stroke-width": mk ? 1.8 : (lv === 1 ? 0 : (lv === 2 ? 1.1 : 0.9)),
-      "stroke-opacity": mk ? 1 : (lv >= 3 ? .35 : 1)
-    });
-    if (lv === 2 && !mk) rect.setAttribute("stroke-opacity", ".55");
-    g.appendChild(rect);
-
-    const fs = FS[lv], lh = fs*1.4;
-    const totalH = n._lines.length * lh;
-    const startY = n._y + (n._h - totalH)/2 + lh/2;
-    n._lines.forEach((line, i) => {
-      const t = el("text", {
-        y: startY + i*lh,
-        "font-size": fs,
-        "font-weight": isRoot ? 800 : (lv === 1 ? 700 : (lv === 2 ? 600 : 400)),
-        fill: isRoot ? "#ffffff" : (lv === 1 ? "#ffffff" : (lv === 2 ? "#1f2937" : "#4b5563"))
-      });
-      if (n._dir > 0 && !isRoot){
-        t.setAttribute("x", n._x + PADX[lv]);
-        t.setAttribute("text-anchor", "start");
-      } else if (n._dir < 0 && !isRoot){
-        t.setAttribute("x", n._x + n._w - PADX[lv]);
-        t.setAttribute("text-anchor", "end");
-      } else {
-        t.setAttribute("x", n._x + PADX[lv]);
-        t.setAttribute("text-anchor", "start");
-      }
-      t.textContent = line;
-      g.appendChild(t);
-    });
-
-    if (n.c && n.c.length){
-      const cx = n._dir > 0 || isRoot ? n._x + n._w + 12 : n._x - 12;
-      const cy = n._y + n._h/2;
-      g.appendChild(el("circle", { cx, cy, r:7.5, fill:"#fff",
-        stroke:n.color || "#9ca3af", "stroke-width":1.2 }));
-      const tt = el("text", { x:cx, y:cy+0.5, "text-anchor":"middle",
-        "font-size":9.5, "font-weight":700, fill:n.color || "#9ca3af" });
-      tt.textContent = n._open ? "−" : String(n.c.length);
-      g.appendChild(tt);
-    } else {
-      /* ----- 叶子节点：学习状态小圆按钮 ----- */
-      const cx = (n._dir > 0 || isRoot) ? n._x + n._w + 12 : n._x - 12;
-      const cy = n._y + n._h/2;
-      const gm = el("g", { class:"mark" });
-      gm.appendChild(el("circle", {
-        cx, cy, r:8,
-        fill: mk ? MARK_COLORS[mk] : "#ffffff",
-        stroke: mk ? MARK_COLORS[mk] : "#c3c9d2",
-        "stroke-width": mk ? 1 : 1.3,
-        "stroke-dasharray": mk ? "0" : "2.2 2.2"
-      }));
-      if (mk){
-        const chk = el("text", {
-          x:cx, y:cy+0.6, "text-anchor":"middle",
-          "font-size":9, "font-weight":800, fill:"#ffffff"
-        });
-        chk.textContent = mk === 3 ? "✓" : (mk === 2 ? "~" : "✕");
-        gm.appendChild(chk);
-      }
-      const ttl = el("title", {});
-      ttl.textContent = `【${MARK_NAMES[mk]}】点击切换：不会 → 仅了解 → 理解 → 取消`;
-      gm.appendChild(ttl);
-      gm.addEventListener("click", ev => { ev.stopPropagation(); cycleMark(n); });
-      g.appendChild(gm);
-    }
-
-    const title = el("title", {}); title.textContent = n.t; g.appendChild(title);
-    g.addEventListener("click", ev => {
-      ev.stopPropagation();
-      if (n.c && n.c.length){
-        if (state.collapsed.has(n)) state.collapsed.delete(n); else state.collapsed.add(n);
-        renderKeepNode(n);
-      }
-    });
-    gN.appendChild(g);
+  (item.code || []).forEach((cb, idx) => {
+    const lang = cb.lang || "text";
+    html += '<div class="cb"><div class="cbh"><span class="cblang">' + esc(lang) + '</span>'
+         +  '<button class="cbcopy" data-cb="' + idx + '">复制</button></div>'
+         +  '<pre><code data-cb="' + idx + '">' + highlight(cb.text, lang) + '</code></pre></div>';
   });
-  scene.appendChild(gN);
-  if (keep){ state.scale = keep.s; state.tx = keep.x; state.ty = keep.y; apply(); }
-  else fit();
-  buildLegend();
+
+  html += '<div style="margin-top:18px;font-size:12px;color:#6b7280">掌握度：'
+       +  '<b style="color:' + MARK_COLORS[mk] + '">' + MARK_NAMES[mk] + '</b>'
+       +  '<button id="btn-mark-here" style="margin-left:10px;font-size:11px;padding:4px 9px">'
+       +  '切换标记</button></div>';
+
+  pbody.innerHTML = html;
+  pbody.scrollTop = 0;
+  document.body.classList.add("panel-open");
+
+  const mb = document.getElementById("btn-mark-here");
+  if (mb) mb.onclick = () => { cycleMark(item); openPanel(item, stage); render && render(true); };
+
+  pbody.querySelectorAll(".cbcopy").forEach(btn => {
+    btn.onclick = () => {
+      const i = +btn.getAttribute("data-cb");
+      const text = (item.code[i] || {}).text || "";
+      const done = () => { btn.textContent = "已复制"; setTimeout(()=>btn.textContent="复制", 1200); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done).catch(fallback);
+      else fallback();
+      function fallback(){
+        const ta = document.createElement("textarea");
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); done(); } catch(e){}
+        ta.remove();
+      }
+    };
+  });
+}
+
+function closePanel(){
+  document.body.classList.remove("panel-open");
+  state.openItem = null;
+}
+document.getElementById("pclose").onclick = closePanel;
+document.getElementById("mask").onclick = closePanel;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closePanel(); });
+
+/* 轻量内联 markdown：**粗体** 与 `代码` */
+function mdInline(s){
+  return esc(s)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+/* ================= 标记 ================= */
+function cycleMark(item){
+  const next = (markOf(item) + 1) % 4;
+  if (next === 0) delete state.marks[item._p];
+  else state.marks[item._p] = next;
+  saveMarks();
+  if (isMobile()) drawOutline(); else render(true);
   updateStats();
 }
 
-/* 展开/折叠后保持视图：以被点击节点为锚点，缩放与位置都不重置 */
-function renderKeepNode(n){
-  if (!n || n._x == null || n._y == null){ render(true); return; }
-  const ax = state.tx + n._x * state.scale;     // 点击节点在屏幕上的位置（渲染前）
-  const ay = state.ty + n._y * state.scale;
-  render(true);                                  // true = 沿用当前缩放/平移
-  if (n._x == null || n._y == null) return;
-  state.tx += ax - (state.tx + n._x * state.scale);   // 把同一个节点挪回原处
-  state.ty += ay - (state.ty + n._y * state.scale);
-  apply();
+function updateStats(){
+  const c = [0,0,0,0];
+  DATA.c.forEach(st => st.c.forEach(it => { c[markOf(it)]++; }));
+  const box = document.getElementById("stats");
+  box.innerHTML =
+      '<span><i class="dot" style="background:' + MARK_COLORS[1] + '"></i>不会 <b>' + c[1] + '</b></span>'
+    + '<span><i class="dot" style="background:' + MARK_COLORS[2] + '"></i>仅了解 <b>' + c[2] + '</b></span>'
+    + '<span><i class="dot" style="background:' + MARK_COLORS[3] + '"></i>理解 <b>' + c[3] + '</b></span>'
+    + '<span style="opacity:.65">未标记 <b>' + c[0] + '</b></span>';
 }
 
-/* ---------- 缩放/平移 ---------- */
-function apply(){
-  scene.setAttribute("transform", `translate(${state.tx},${state.ty}) scale(${state.scale})`);
-  document.getElementById("zoomval").textContent = Math.round(state.scale*100) + "%";
-}
-function fit(){
-  const bb = scene.getBBox();
-  if (!bb.width) return;
-  const W = svg.clientWidth, H = svg.clientHeight;
-  const padX = 70, padTop = 86, padBottom = 62;
-  const s = Math.min((W - padX*2)/bb.width, (H - padTop - padBottom)/bb.height, 1.25);
-  state.scale = Math.max(s, 0.1);
-  state.tx = (W - bb.width*state.scale)/2 - bb.x*state.scale;
-  state.ty = padTop + (H - padTop - padBottom - bb.height*state.scale)/2 - bb.y*state.scale;
-  apply();
-}
-
-svg.addEventListener("wheel", e => {
-  e.preventDefault();
-  const r = svg.getBoundingClientRect();
-  const mx = e.clientX - r.left, my = e.clientY - r.top;
-  const k = e.deltaY < 0 ? 1.12 : 1/1.12;
-  const ns = Math.min(Math.max(state.scale*k, 0.06), 3);
-  const q = ns/state.scale;
-  state.tx = mx - (mx-state.tx)*q;
-  state.ty = my - (my-state.ty)*q;
-  state.scale = ns; apply();
-}, { passive:false });
-
-let drag=false, lx=0, ly=0;
-svg.addEventListener("mousedown", e => { drag=true; lx=e.clientX; ly=e.clientY; svg.classList.add("dragging"); });
-window.addEventListener("mousemove", e => {
-  if(!drag) return;
-  state.tx += e.clientX-lx; state.ty += e.clientY-ly; lx=e.clientX; ly=e.clientY; apply();
-});
-window.addEventListener("mouseup", () => { drag=false; svg.classList.remove("dragging"); });
-
-function buildLegend(){
-  const box = document.getElementById("legend"); box.innerHTML = "";
-  DATA.c.forEach(st => {
-    const s = document.createElement("span");
-    s.innerHTML = `<i style="background:${st.color}"></i>${st.t.split("：")[0]}`;
-    box.appendChild(s);
-  });
-}
-
-function setAll(fn){
-  const walk = (n, d) => { if (fn(n, d)) state.collapsed.add(n); else state.collapsed.delete(n);
-                           (n.c||[]).forEach(ch => walk(ch, d+1)); };
-  walk(DATA, 0);
-  state.collapsed.delete(DATA);
-  render();
-}
-document.getElementById("btn-expand").onclick = () => setAll(() => false);
-document.getElementById("btn-collapse").onclick = () => setAll((n,d) => d >= 1);
-document.getElementById("btn-items").onclick = () => setAll((n,d) => d >= 2);
-document.getElementById("btn-fit").onclick = () => render();
-document.getElementById("btn-in").onclick = () => { state.scale = Math.min(state.scale*1.18,3); apply(); };
-document.getElementById("btn-out").onclick = () => { state.scale = Math.max(state.scale/1.18,0.06); apply(); };
-document.getElementById("btn-reset").onclick = () => {
-  if (!confirm("确定清空所有学习状态标记？")) return;
-  state.marks = {}; saveMarks();
-  try { localStorage.setItem(LS_SEEDED, "1"); } catch(e){}
-  render(true); updateStats();
-};
-
-/* ===== 标记导出 / 导入：用于同步到 U 盘 ===== */
-function exportMarks(){
-  const keys = Object.keys(state.marks);
-  const payload = {
-    app: "前后端数据沟通全链路-学习标记",
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    total: keys.length,
-    marks: state.marks
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+/* ================= 标记导出 / 导入 ================= */
+document.getElementById("btn-export").onclick = () => {
+  const payload = { app:"Python 数据分析-学习标记", version:2,
+                    exportedAt:new Date().toISOString(),
+                    total:Object.keys(state.marks).length, marks:state.marks };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
   const d = new Date();
-  const ymd = d.getFullYear() + "-" +
-              String(d.getMonth()+1).padStart(2,"0") + "-" +
-              String(d.getDate()).padStart(2,"0");
+  const ymd = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
   const a = document.createElement("a");
-  a.href = url;
-  a.download = "学习标记-" + ymd + ".json";
+  a.href = url; a.download = "数据分析标记-" + ymd + ".json";
   document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
-  alert("已导出 " + keys.length + " 条标记\n\n文件名：学习标记-" + ymd + ".json\n（在浏览器下载目录里）\n\n把它拷到 U 盘，换电脑时用「导入标记」恢复。");
-}
-
-function importMarks(file){
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  alert("已导出 " + payload.total + " 条标记\n文件名：数据分析标记-" + ymd + ".json");
+};
+document.getElementById("btn-import").onclick = () => document.getElementById("file-import").click();
+document.getElementById("file-import").addEventListener("change", ev => {
+  const f = ev.target.files && ev.target.files[0]; if (!f) return;
   const fr = new FileReader();
   fr.onload = () => {
     try {
       const obj = JSON.parse(fr.result);
       const marks = obj.marks || obj;
-      if (typeof marks !== "object" || marks === null || Array.isArray(marks)) throw new Error("不是有效的标记文件");
       const keys = Object.keys(marks).filter(k => /^r(-\d+)+$/.test(k) && marks[k] >= 1 && marks[k] <= 3);
-      if (!keys.length) throw new Error("文件里没有可用的标记");
-      if (!confirm("将导入 " + keys.length + " 条标记。\n\n规则：同一知识点以导入文件为准，其余保留你当前的标记。\n\n继续？")) return;
-      keys.forEach(k => { state.marks[k] = marks[k]; });
-      saveMarks(); render(true); updateStats();
-      alert("导入完成。\n当前共 " + Object.keys(state.marks).length + " 条标记。");
-    } catch (e) {
-      alert("导入失败：" + e.message + "\n\n请确认选的是「导出标记」生成的 json 文件。");
-    }
+      if (!keys.length) throw new Error("文件里没有可用标记");
+      if (!confirm("将导入 " + keys.length + " 条标记，同知识点以文件为准，其余保留。继续？")) return;
+      keys.forEach(k => state.marks[k] = marks[k]);
+      saveMarks(); refresh(); alert("导入完成，当前共 " + Object.keys(state.marks).length + " 条");
+    } catch(e){ alert("导入失败：" + e.message); }
   };
-  fr.readAsText(file, "utf-8");
-}
-
-const _authorBtn = document.getElementById("btn-author");
-if (_authorBtn) _authorBtn.onclick = loadAuthorMarks;
-document.getElementById("btn-export").onclick = exportMarks;
-document.getElementById("btn-import").onclick = () => document.getElementById("file-import").click();
-document.getElementById("file-import").addEventListener("change", ev => {
-  const f = ev.target.files && ev.target.files[0];
-  if (f) importMarks(f);
+  fr.readAsText(f, "utf-8");
   ev.target.value = "";
 });
+document.getElementById("btn-reset").onclick = () => {
+  if (!confirm("确定清空所有掌握度标记？")) return;
+  state.marks = {}; saveMarks(); refresh();
+};
 
+function refresh(){ if (isMobile()) drawOutline(); else render(true); updateStats(); }
 
-/* 初始视图：默认「展开到环节」；可用 ?view=all|collapse|items 指定 */
-(function(){
-  state.collapsed.clear();
-  const v = (new URLSearchParams(location.search)).get("view") || "items";
-  const walk = (n, d) => { if (d >= 2) state.collapsed.add(n); (n.c||[]).forEach(ch => walk(ch, d+1)); };
-  if (v === "items"){
-    DATA.c.forEach(st => walk(st, 1));
-  } else if (v === "all"){
-    /* 什么都不折叠 */
-  } else if (v === "collapse"){
-    DATA.c.forEach(st => state.collapsed.add(st));
-  }
-})();
-/* 首次访问：把作者标记作为初始状态 */
-const _seeded = seedAuthorMarks();
-if (_seeded){
-  const _h = document.querySelector(".hint");
-  if (_h) _h.innerHTML += ' · <b>已载入作者 ' + _seeded + ' 条标记</b>';
+/* ================= 桌面：SVG 双向导图 ================= */
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("map");
+const scene = document.getElementById("scene");
+const el = (t,a) => { const e = document.createElementNS(NS,t); for (const k in a) e.setAttribute(k,a[k]); return e; };
+
+const FS   = {0:15, 1:13, 2:12};
+const PADX = {0:18, 1:13, 2:11};
+const PADY = {0:12, 1:9,  2:7};
+const GAPY = {0:18, 1:8,  2:5};
+const GAPX = {0:76, 1:44};
+const MAXW = {0:340, 1:300, 2:300};
+const MAXL = {0:2, 1:3, 2:3};
+const CONTENT = {w:0,h:0,x0:0};
+
+const _mc = document.createElement("canvas").getContext("2d");
+function textW(s, fs, weight){
+  _mc.font = (weight||600) + " " + fs + "px " + getComputedStyle(document.body).fontFamily;
+  return _mc.measureText(s).width;
 }
-render();
-window.addEventListener("resize", () => { clearTimeout(window._t); window._t = setTimeout(apply, 120); });
-</script>
-
-<script>
-/* ============ 手机端：竖排大纲模式（原生滚动，不缩放画布） ============ */
-(function(){
-  if (window.innerWidth > 900) return;
-
-  document.body.classList.add("mobile");
-  const bar  = document.querySelector(".topbar");
-  const hint = document.querySelector(".hint");
-
-  const box = document.createElement("div");
-  box.id = "outline";
-  document.body.appendChild(box);
-
-  function fitBox(){
-    const h = bar.getBoundingClientRect().height;
-    box.style.top = h + "px";
+function tokenize(s){
+  const out = []; let buf = "";
+  for (const ch of s){
+    if (/[\u3000-\u303f\u4e00-\u9fff\uff00-\uffef]/.test(ch)){
+      if (buf){ out.push(buf); buf=""; } out.push(ch);
+    } else if (ch === " "){ buf += ch; out.push(buf); buf=""; }
+    else buf += ch;
   }
-  fitBox();
-
-  /* 路径 -> 节点 索引 */
-  const P2N = {};
-  (function index(n){
-    if (n._path) P2N[n._path] = n;
-    (n.c || []).forEach(index);
-  })(DATA);
-
-  const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-
-  /* 默认展开到「环节」，细节先收起 */
-  state.collapsed.clear();
-  (function init(n, d){
-    if (d >= 2) state.collapsed.add(n);
-    (n.c || []).forEach(ch => init(ch, d + 1));
-  })(DATA, 0);
-
-  function draw(){
-    const out = [];
-    (function walk(n, d){
-      const lv = Math.min(d, 3);
-      const hasKids = n.c && n.c.length;
-      const open = hasKids && !state.collapsed.has(n);
-      const mk = state.marks[n._path] || 0;
-      const color = n.color || "#475569";
-
-      let bg = "#fff", border = "#e5e2db";
-      if (lv === 0){ bg = "#111827"; border = "#111827"; }
-      else if (lv === 1){ bg = color; border = color; }
-      else if (mk){ bg = MARK_TINTS[mk]; border = MARK_COLORS[mk]; }
-
-      out.push('<div class="oln">');
-      out.push('<div class="olrow lv' + lv + '" data-p="' + n._path +
-               '" style="background:' + bg + ';border-color:' + border + '">');
-      if (hasKids){
-        out.push('<span class="oltog">' + (open ? "−" : n.c.length) + '</span>');
-      } else {
-        out.push('<span class="oltog" style="visibility:hidden"></span>');
-      }
-      out.push('<span class="oltext">' + esc(n.t) + '</span>');
-      if (!hasKids){
-        const sym = mk === 3 ? "✓" : mk === 2 ? "~" : mk === 1 ? "✕" : "";
-        out.push('<span class="olmk" data-mark="' + n._path + '" style="border-style:' +
-                 (mk ? "solid" : "dashed") + ';border-color:' + (mk ? MARK_COLORS[mk] : "#c3c9d2") +
-                 ';background:' + (mk ? MARK_COLORS[mk] : "#fff") + '">' + sym + '</span>');
-      }
-      out.push('</div>');
-      if (open){
-        out.push('<div class="olkids">');
-        n.c.forEach(ch => walk(ch, d + 1));
-        out.push('</div>');
-      }
-      out.push('</div>');
-    })(DATA, 0);
-    box.innerHTML = out.join("");
+  if (buf) out.push(buf);
+  return out;
+}
+function wrap(text, fs, budget, maxL, weight){
+  const toks = tokenize(text), lines = []; let cur = "";
+  for (const tk of toks){
+    const test = cur + tk;
+    if (cur && textW(test, fs, weight) > budget){
+      lines.push(cur); cur = tk;
+      if (lines.length >= maxL){ cur = ""; break; }
+    } else cur = test;
   }
-
-  /* 让 cycleMark / setAll 等既有逻辑都走大纲渲染 */
-  window.render = function(){ draw(); updateStats(); };
-
-  function cyclePath(p){
-    const next = ((state.marks[p] || 0) + 1) % 4;
-    if (next === 0) delete state.marks[p];
-    else state.marks[p] = next;
-    saveMarks();
-    draw();
-    updateStats();
+  if (cur && lines.length < maxL) lines.push(cur);
+  const full = toks.join("").replace(/\s/g,""), used = lines.join("").replace(/\s/g,"");
+  if (used.length < full.length && lines.length){
+    let last = lines[lines.length-1];
+    while (last.length > 1 && textW(last+"…", fs, weight) > budget) last = last.slice(0,-1);
+    lines[lines.length-1] = last + "…";
   }
+  return lines;
+}
 
-  box.addEventListener("click", ev => {
-    const mk = ev.target.closest("[data-mark]");
-    if (mk){ ev.stopPropagation(); cyclePath(mk.getAttribute("data-mark")); return; }
+function measure(n, level){
+  n._level = level;
+  n._lines = wrap(n.t, FS[level], MAXW[level], MAXL[level], level===0?800:(level===1?700:600));
+  n._w = Math.max(...n._lines.map(l => textW(l, FS[level], 600))) + PADX[level]*2;
+  n._w = Math.min(n._w, MAXW[level] + PADX[level]*2);
+  n._h = n._lines.length * (FS[level]*1.42) + PADY[level]*2;
+  n._open = !state.collapsed.has(n) && n.c && n.c.length > 0;
+  if (n._open) n.c.forEach(ch => measure(ch, level+1));
+}
 
-    const row = ev.target.closest(".olrow");
-    if (!row) return;
-    const n = P2N[row.getAttribute("data-p")];
-    if (!n || !(n.c && n.c.length)) return;
-    if (state.collapsed.has(n)) state.collapsed.delete(n);
-    else state.collapsed.add(n);
-    draw();
+function layoutSide(stages, dir, x0){
+  let cursor = 0;
+  const placeStage = st => {
+    st._dir = dir;
+    const stageX = dir > 0 ? x0 : x0 - st._w;
+    st._x = stageX;
+    const itemX = dir > 0 ? stageX + st._w + GAPX[1] : stageX - GAPX[1];
+    const centers = [];
+    if (st._open){
+      st.c.forEach(it => {
+        it._dir = dir;
+        it._x = dir > 0 ? itemX : itemX - it._w;
+        it._y = cursor;
+        cursor += it._h + GAPY[2];
+        centers.push(it._y + it._h/2);
+      });
+    }
+    if (centers.length) st._y = (Math.min(...centers) + Math.max(...centers))/2 - st._h/2;
+    else { st._y = cursor; cursor += st._h + GAPY[1]; }
+  };
+  stages.forEach(placeStage);
+  return { height: cursor };
+}
+
+function build(){
+  measure(DATA, 0);
+  const right = [], left = [];
+  DATA.c.forEach((st,i) => (i % 2 === 0 ? right : left).push(st));
+
+  layoutSide(right, +1, 0);
+  layoutSide(left, -1, 0);
+
+  let leftMinX = 0, rightMaxX = 0;
+  left.forEach(st => { leftMinX = Math.min(leftMinX, st._x);
+    st.c.forEach(it => { if (st._open) leftMinX = Math.min(leftMinX, it._x); }); });
+  right.forEach(st => { rightMaxX = Math.max(rightMaxX, st._x + st._w);
+    st.c.forEach(it => { if (st._open) rightMaxX = Math.max(rightMaxX, it._x + it._w); }); });
+
+  const leftW = -leftMinX;
+  const rootX = leftW + GAPX[0];
+  const shiftRight = rootX + DATA._w + GAPX[0];
+  const shiftLeft = leftW;
+
+  const Rh = Math.max(0, ...right.map(st => st._y + (st._open ? 0 : 0)));
+  // 高度用 cursor 推算
+  const rH = right.length ? Math.max(...right.map(st => {
+    let m = st._y + st._h;
+    if (st._open) m = Math.max(m, ...st.c.map(it => it._y + it._h));
+    return m;
+  })) : 0;
+  const lH = left.length ? Math.max(...left.map(st => {
+    let m = st._y + st._h;
+    if (st._open) m = Math.max(m, ...st.c.map(it => it._y + it._h));
+    return m;
+  })) : 0;
+
+  const H = Math.max(rH, lH, DATA._h);
+  const dyR = (H - rH)/2, dyL = (H - lH)/2;
+
+  right.forEach(st => {
+    st._x += shiftRight; st._y += dyR;
+    if (st._open) st.c.forEach(it => { it._x += shiftRight; it._y += dyR; });
+  });
+  left.forEach(st => {
+    st._x += shiftLeft; st._y += dyL;
+    if (st._open) st.c.forEach(it => { it._x += shiftLeft; it._y += dyL; });
   });
 
-  if (hint) hint.textContent = "点节点展开/折叠 · 点小圆标掌握度 · 上下滑动";
+  DATA._x = rootX;
+  DATA._y = H/2 - DATA._h/2;
 
-  draw();
-  window.addEventListener("resize", () => {
-    fitBox();
-    if (window.innerWidth > 900) location.reload();
+  CONTENT.w = Math.max(rightMaxX + shiftRight, rootX + DATA._w, shiftLeft + 0) + 20;
+  CONTENT.h = H + 24;
+
+  const nodes = [DATA];
+  DATA.c.forEach(st => { nodes.push(st); if (st._open) st.c.forEach(it => nodes.push(it)); });
+  return nodes;
+}
+
+function drawNode(g, n, lv, isRoot){
+  const isLeaf = !(n.c && n.c.length);
+  const mk = isLeaf ? markOf(n) : 0;
+  const color = n.color || "#475569";
+
+  let fill = "#fff", stroke = color, sw = 1, op = 1;
+  if (lv === 0){ fill = "#111827"; stroke = "#111827"; }
+  else if (lv === 1){ fill = color; stroke = color; sw = 0; }
+  else if (mk){ fill = MARK_TINTS[mk]; stroke = MARK_COLORS[mk]; sw = 1.6; }
+  else { op = .5; sw = .9; }
+
+  g.appendChild(el("rect", { x:n._x, y:n._y, width:n._w, height:n._h,
+    rx: lv === 0 ? 11 : 8, fill: fill, stroke: stroke,
+    "stroke-width": sw, "stroke-opacity": op }));
+
+  const fs = FS[lv], lh = fs*1.42, total = n._lines.length*lh;
+  const y0 = n._y + (n._h - total)/2 + lh/2;
+  n._lines.forEach((line, i) => {
+    const t = el("text", { y: y0 + i*lh, "font-size": fs,
+      "font-weight": lv === 0 ? 800 : (lv === 1 ? 700 : 600),
+      fill: (lv === 0 || lv === 1) ? "#fff" : "#1f2937" });
+    if (n._dir < 0){ t.setAttribute("x", n._x + n._w - PADX[lv]); t.setAttribute("text-anchor","end"); }
+    else { t.setAttribute("x", n._x + PADX[lv]); t.setAttribute("text-anchor","start"); }
+    t.textContent = line;
+    g.appendChild(t);
   });
-  window.addEventListener("orientationchange", () => setTimeout(fitBox, 300));
-})();
-</script>
 
+  // 折叠指示（阶段）
+  if (lv === 1){
+    const cx = n._dir > 0 ? n._x + n._w + 11 : n._x - 11;
+    const cy = n._y + n._h/2;
+    g.appendChild(el("circle", { cx, cy, r:7.5, fill:"#fff", stroke:color, "stroke-width":1.2 }));
+    const tt = el("text", { x:cx, y:cy+0.5, "text-anchor":"middle", "font-size":9.5,
+      "font-weight":700, fill:color });
+    tt.textContent = n._open ? "−" : String(n.c.length);
+    g.appendChild(tt);
+  }
+
+  // 标记圆钮（知识点）
+  if (isLeaf && lv === 2){
+    const cx = n._dir > 0 ? n._x + n._w + 10 : n._x - 10;
+    const cy = n._y + n._h/2;
+    const gm = el("g", {});
+    gm.appendChild(el("circle", { cx, cy, r:7.5,
+      fill: mk ? MARK_COLORS[mk] : "#fff",
+      stroke: mk ? MARK_COLORS[mk] : "#c3c9d2",
+      "stroke-width": mk ? 1 : 1.2,
+      "stroke-dasharray": mk ? "0" : "2 2" }));
+    if (mk){
+      const s = el("text", { x:cx, y:cy+0.5, "text-anchor":"middle", "font-size":9,
+        "font-weight":800, fill:"#fff" });
+      s.textContent = mk === 3 ? "✓" : (mk === 2 ? "~" : "✕");
+      gm.appendChild(s);
+    }
+    gm.addEventListener("click", ev => { ev.stopPropagation(); cycleMark(n); });
+    g.appendChild(gm);
+  }
+}
+
+function render(keepView){
+  const keep = keepView ? { s:state.scale, x:state.tx, y:state.ty } : null;
+  const nodes = build();
+  scene.innerHTML = "";
+
+  // 连线
+  const gE = el("g", {});
+  DATA.c.forEach(st => {
+    const px = st._dir > 0 ? DATA._x + DATA._w : DATA._x;
+    const py = DATA._y + DATA._h/2;
+    const cx = st._dir > 0 ? st._x : st._x + st._w;
+    const cy = st._y + st._h/2;
+    const mx = (px + cx)/2;
+    gE.appendChild(el("path", { d:"M "+px+" "+py+" C "+mx+" "+py+", "+mx+" "+cy+", "+cx+" "+cy,
+      fill:"none", stroke:st.color, "stroke-width":2, opacity:.75 }));
+    if (st._open) st.c.forEach(it => {
+      const sx = st._dir > 0 ? st._x + st._w : st._x;
+      const sy = st._y + st._h/2;
+      const ix = st._dir > 0 ? it._x : it._x + it._w;
+      const iy = it._y + it._h/2;
+      const mx2 = (sx + ix)/2;
+      gE.appendChild(el("path", { d:"M "+sx+" "+sy+" C "+mx2+" "+sy+", "+mx2+" "+iy+", "+ix+" "+iy,
+        fill:"none", stroke:st.color, "stroke-width":1.2, opacity:.45 }));
+    });
+  });
+  scene.appendChild(gE);
+
+  // 节点
+  const gN = el("g", {});
+  nodes.forEach(n => {
+    const g = el("g", { class:"node" });
+    const lv = n._level;
+    drawNode(g, n, lv, lv === 0);
+    g.addEventListener("click", ev => {
+      ev.stopPropagation();
+      if (lv === 1){
+        if (state.collapsed.has(n)) state.collapsed.delete(n); else state.collapsed.add(n);
+        render(true);
+      } else if (lv === 2){
+        const stage = DATA.c.find(st => st.c.includes(n));
+        openPanel(n, stage);
+      }
+    });
+    gN.appendChild(g);
+  });
+  scene.appendChild(gN);
+
+  if (keep){ state.scale = keep.s; state.tx = keep.x; state.ty = keep.y; apply(); }
+  else fit();
+  updateStats();
+}
+
+function apply(){
+  scene.setAttribute("transform", "translate(" + state.tx + "," + state.ty + ") scale(" + state.scale + ")");
+  const v = document.getElementById("zoomval");
+  if (v) v.textContent = Math.round(state.scale*100) + "%";
+}
+function fit(){
+  const W = svg.clientWidth, H = svg.clientHeight;
+  const padX = 46, padTop = 74, padBottom = 40;
+  if (!CONTENT.w) return;
+  const s = Math.min((W - padX*2)/CONTENT.w, (H - padTop - padBottom)/CONTENT.h, 1.6);
+  state.scale = Math.max(s, 0.12);
+  const cw = CONTENT.w*state.scale, ch = CONTENT.h*state.scale;
+  state.tx = Math.round((W - cw)/2);
+  state.ty = Math.round(padTop + (H - padTop - padBottom - ch)/2);
+  apply();
+}
+
+/* 缩放 / 平移 */
+svg.addEventListener("wheel", e => {
+  e.preventDefault();
+  const r = svg.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const k = e.deltaY < 0 ? 1.12 : 1/1.12;
+  const ns = Math.min(Math.max(state.scale*k, 0.08), 3);
+  const q = ns/state.scale;
+  state.tx = mx - (mx - state.tx)*q;
+  state.ty = my - (my - state.ty)*q;
+  state.scale = ns; apply();
+}, { passive:false });
+
+let drag = false, lx = 0, ly = 0;
+svg.addEventListener("mousedown", e => { drag = true; lx = e.clientX; ly = e.clientY; svg.classList.add("dragging"); });
+window.addEventListener("mousemove", e => {
+  if (!drag) return;
+  state.tx += e.clientX - lx; state.ty += e.clientY - ly;
+  lx = e.clientX; ly = e.clientY; apply();
+});
+window.addEventListener("mouseup", () => { drag = false; svg.classList.remove("dragging"); });
+
+/* 触摸：单指平移 / 双指缩放 */
+let tc = null;
+svg.addEventListener("touchstart", e => {
+  if (e.touches.length === 1) tc = { m:"pan", x:e.touches[0].clientX, y:e.touches[0].clientY };
+  else if (e.touches.length === 2) tc = { m:"pinch",
+    d: Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY),
+    cx: (e.touches[0].clientX+e.touches[1].clientX)/2,
+    cy: (e.touches[0].clientY+e.touches[1].clientY)/2 };
+}, { passive:false });
+svg.addEventListener("touchmove", e => {
+  if (!tc) return;
+  e.preventDefault();
+  if (tc.m === "pan" && e.touches.length === 1){
+    const p = e.touches[0];
+    state.tx += p.clientX - tc.x; state.ty += p.clientY - tc.y;
+    tc.x = p.clientX; tc.y = p.clientY; apply();
+  } else if (tc.m === "pinch" && e.touches.length === 2){
+    const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+    const k = d/tc.d;
+    const r = svg.getBoundingClientRect();
+    const mx = tc.cx - r.left, my = tc.cy - r.top;
+    const ns = Math.min(Math.max(state.scale*k, 0.08), 3);
+    const q = ns/state.scale;
+    state.tx = mx - (mx - state.tx)*q;
+    state.ty = my - (my - state.ty)*q;
+    state.scale = ns; tc.d = d; apply();
+  }
+}, { passive:false });
+svg.addEventListener("touchend", e => { tc = e.touches.length ? tc : null; });
+
+/* ================= 手机：竖排大纲 ================= */
+const outline = document.getElementById("outline");
+function drawOutline(){
+  outline.style.top = document.querySelector(".topbar").getBoundingClientRect().height + "px";
+  const parts = [];
+  const walk = (n, d) => {
+    const lv = Math.min(d, 2);
+    const hasKids = n.c && n.c.length;
+    const open = hasKids && !state.collapsed.has(n);
+    const mk = hasKids ? 0 : markOf(n);
+    let bg = "#fff", bd = "#e5e2db";
+    if (lv === 0){ bg = "#111827"; bd = "#111827"; }
+    else if (lv === 1){ bg = n.color; bd = n.color; }
+    else if (mk){ bg = MARK_TINTS[mk]; bd = MARK_COLORS[mk]; }
+
+    parts.push('<div class="oln"><div class="olrow lv' + lv + '" data-p="' + n._p +
+      '" style="background:' + bg + ';border-color:' + bd + '">');
+    parts.push(hasKids
+      ? '<span class="oltog">' + (open ? "−" : n.c.length) + '</span>'
+      : '<span class="oltog" style="visibility:hidden"></span>');
+    parts.push('<span class="oltext">' + esc(n.t) + '</span>');
+    if (!hasKids && d === 2){
+      const sym = mk === 3 ? "✓" : mk === 2 ? "~" : mk === 1 ? "✕" : "";
+      parts.push('<span class="olmk" data-mark="' + n._p + '" style="border-style:' +
+        (mk ? "solid" : "dashed") + ';border-color:' + (mk ? MARK_COLORS[mk] : "#c3c9d2") +
+        ';background:' + (mk ? MARK_COLORS[mk] : "#fff") + '">' + sym + '</span>');
+    }
+    parts.push('</div>');
+    if (open){ parts.push('<div class="olkids">'); n.c.forEach(ch => walk(ch, d+1)); parts.push('</div>'); }
+    parts.push('</div>');
+  };
+  walk(DATA, 0);
+  outline.innerHTML = parts.join("");
+}
+
+outline.addEventListener("click", ev => {
+  const mk = ev.target.closest("[data-mark]");
+  if (mk){
+    ev.stopPropagation();
+    const p = mk.getAttribute("data-mark");
+    DATA.c.forEach(st => st.c.forEach(it => { if (it._p === p) cycleMark(it); }));
+    return;
+  }
+  const row = ev.target.closest(".olrow");
+  if (!row) return;
+  const p = row.getAttribute("data-p");
+  if (p === "r") return;
+  const seg = p.split("-").length;    // r-i 或 r-i-j
+  if (seg === 2){
+    const st = DATA.c[+p.split("-")[1]];
+    if (state.collapsed.has(st)) state.collapsed.delete(st); else state.collapsed.add(st);
+    drawOutline();
+  } else {
+    const [, i, j] = p.split("-").map(Number);
+    openPanel(DATA.c[i].c[j], DATA.c[i]);
+  }
+});
+
+/* ================= 工具栏 ================= */
+document.getElementById("btn-expand").onclick = () => { state.collapsed.clear(); refresh(); };
+document.getElementById("btn-collapse").onclick = () => {
+  DATA.c.forEach(st => state.collapsed.add(st)); refresh();
+};
+document.getElementById("btn-fit").onclick = () => { if (!isMobile()) render(); else drawOutline(); };
+document.getElementById("btn-in").onclick = () => { state.scale = Math.min(state.scale*1.18, 3); apply(); };
+document.getElementById("btn-out").onclick = () => { state.scale = Math.max(state.scale/1.18, 0.08); apply(); };
+
+/* ================= 启动 ================= */
+function start(){
+  if (isMobile()){
+    drawOutline();
+  } else {
+    render();
+  }
+  updateStats();
+}
+start();
+
+let rt = null;
+window.addEventListener("resize", () => {
+  clearTimeout(rt);
+  rt = setTimeout(() => { start(); }, 150);
+});
+</script>
 </body>
 </html>
