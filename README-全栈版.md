@@ -28,7 +28,7 @@
 3. 启动 Spring Boot，自动打开 <http://127.0.0.1:8080/>
 
 > 库和表都是自动创建的：`knowledge_base` 库由 JDBC 参数 `createDatabaseIfNotExist=true` 建，
-> 表由 `schema.sql` 建，第一次启动还会把 `seed/notes.json` 里的 59 篇笔记自动导入。
+> 表由 `schema.sql` 建，第一次启动还会把 `seed/notes.json` 里的 62 篇笔记自动导入。
 > **所以换台电脑只要有 MySQL，双击就能用，不用手动建库导数据。**
 
 ### 手动方式
@@ -77,7 +77,7 @@ JavaBlog/
         └── resources/
             ├── application.yml           ← 数据源/端口/前端目录配置
             ├── schema.sql                ← 建表脚本
-            └── seed/notes.json           ← 首次启动自动导入的 59 篇笔记
+            └── seed/notes.json           ← 首次启动自动导入的 62 篇笔记
 ```
 
 ---
