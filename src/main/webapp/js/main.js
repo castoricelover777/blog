@@ -17,6 +17,10 @@
 // ⚠ 相对路径而不是裸名 'vue'：浏览器和 node 都能直接解析（理由见 app.js 顶部注释）
 import { createApp } from './vendor/vue.esm-browser.prod.js';
 import { createBlogApp } from './app.js';
+import { initSplitter } from './splitter.js';
 
 // 挂到页面上 id="app" 的元素
 createBlogApp({ createApp }).mount('#app');
+
+// 左右分栏的拖动条：等 Vue 把 DOM 挂好之后再绑事件
+initSplitter();

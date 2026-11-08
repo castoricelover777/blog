@@ -94,6 +94,11 @@
       </template>
     </ul>
 
+    <!-- ============ 可拖动的分栏条（左右拖动调整列表宽度） ============ -->
+    <div id="splitter" role="separator" aria-orientation="vertical" tabindex="0"
+         aria-label="拖动调整左侧列表宽度（双击复位，方向键微调）"
+         title="左右拖动调整列表宽度 · 双击复位"></div>
+
     <!-- ============ 右栏：详情 ============ -->
     <div id="content">
       <template v-if="currentNote">

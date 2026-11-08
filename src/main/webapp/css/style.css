@@ -113,10 +113,10 @@ button.primary:hover { background: var(--green-2); }
 }
 #cats .tips { margin-left: auto; }   /* 统计文字推到最右边 */
 
-/* ========== 主体：左右两栏（各自独立滚动） ========== */
+/* ========== 主体：左右两栏（各自独立滚动 + 中间可拖动分栏） ========== */
 main {
   display: flex;
-  gap: 16px;
+  gap: 0;                      /* 间距交给中间的 #splitter，拖动时才不会留一条缝 */
   padding: 14px 18px 0;
   align-items: stretch;        /* 两栏都拉满高度，才谈得上"各自滚动" */
   flex: 1;
@@ -139,10 +139,71 @@ main {
   flex: 1;
   min-width: 0;
   overflow-y: scroll;          /* 常驻轨道：没内容可滚时也在，位置固定不跳 */
+  padding-left: 8px;           /* 和分栏条之间留点空隙，正文不贴线 */
   padding-right: 6px;
   padding-bottom: 24px;
   overscroll-behavior: contain;
 }
+
+/* ============================================================================
+   中间的可拖动分栏条（splitter.js 负责拖动逻辑）
+   ============================================================================
+   视觉分三层：
+     · 16px 宽的透明热区  → 好抓，不用瞄得很准
+     · 中间一条 2px 竖线  → 告诉用户"这里是分界"
+     · 中间一个胶囊抓手    → 悬停变蓝并变长，明确"可以拖"
+   ========================================================================== */
+#splitter {
+  flex: 0 0 16px;              /* 拖动热区宽度 */
+  position: relative;
+  cursor: col-resize;          /* 鼠标变双向箭头 */
+  border-radius: 6px;
+  background: transparent;
+  touch-action: none;          /* 触屏拖动时不要顺手滚动页面 */
+  transition: background .15s;
+}
+#splitter::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: 1px;
+  background: var(--border-2);
+  transition: background .15s;
+}
+#splitter::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border-radius: 4px;
+  background: #6e7681;
+  opacity: .9;
+  transition: background .15s, height .15s, opacity .15s;
+}
+/* 悬停 / 拖动中 / 键盘聚焦：变蓝、抓手拉长，给足反馈 */
+#splitter:hover::before,
+#splitter.dragging::before,
+#splitter:focus-visible::before { background: var(--accent); }
+#splitter:hover::after,
+#splitter.dragging::after,
+#splitter:focus-visible::after {
+  background: var(--accent);
+  height: 64px;
+  opacity: 1;
+}
+#splitter:focus-visible { outline: none; background: #58a6ff14; }
+#splitter.dragging { background: #58a6ff10; }
+
+/* 拖动过程中：整页禁止选中文字，光标保持双向箭头 */
+body.resizing { cursor: col-resize; user-select: none; }
+body.resizing * { user-select: none !important; }
 
 /* 左右两栏的滚动条：加宽 + 高对比 + 常驻轨道，鼠标好抓
    （默认的 8px 深灰太细、太暗，容易以为"没滚动条"） */
@@ -304,7 +365,8 @@ mark { background: var(--yellow); color: var(--bg); padding: 0 2px; border-radiu
     padding-right: 0;
     padding-bottom: 0;
   }
-  #content { overflow: visible; padding-bottom: 0; }
+  #content { overflow: visible; padding-left: 0; padding-bottom: 0; }
+  #splitter { display: none; }   /* 上下排列时没有"左右分界"，隐藏拖动条 */
 }
 
 /* ============================================================================
