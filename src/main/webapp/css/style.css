@@ -130,7 +130,7 @@ main {
   list-style: none;
   margin: 0;
   padding: 0 8px 18px 0;       /* 右边留 8px，滚动条不压字 */
-  overflow-y: auto;
+  overflow-y: scroll;          /* 用 scroll 而不是 auto：轨道常驻，一眼看到能拖 */
   overscroll-behavior: contain; /* 滚到尽头不把滚动"传染"给页面 */
 }
 
@@ -138,20 +138,39 @@ main {
 #content {
   flex: 1;
   min-width: 0;
-  overflow-y: auto;
+  overflow-y: scroll;          /* 常驻轨道：没内容可滚时也在，位置固定不跳 */
+  padding-right: 6px;
   padding-bottom: 24px;
   overscroll-behavior: contain;
 }
 
-/* 暗色细滚动条（Firefox / Chrome 各一套写法） */
-#list, #content { scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
-#list::-webkit-scrollbar, #content::-webkit-scrollbar { width: 8px; }
-#list::-webkit-scrollbar-track, #content::-webkit-scrollbar-track { background: transparent; }
-#list::-webkit-scrollbar-thumb, #content::-webkit-scrollbar-thumb {
-  background: var(--border-2);
-  border-radius: 4px;
+/* 左右两栏的滚动条：加宽 + 高对比 + 常驻轨道，鼠标好抓
+   （默认的 8px 深灰太细、太暗，容易以为"没滚动条"） */
+#list, #content {
+  scrollbar-width: auto;            /* Firefox：不用 thin，细的不好拖 */
+  scrollbar-color: #6e7681 var(--bg-soft);
+  scrollbar-gutter: stable;         /* 预留轨道，内容不会因滚动条出现而左右跳 */
 }
-#list::-webkit-scrollbar-thumb:hover, #content::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+#list::-webkit-scrollbar, #content::-webkit-scrollbar {
+  width: 16px;                      /* 比默认粗一倍，明显、好拖 */
+}
+#list::-webkit-scrollbar-track, #content::-webkit-scrollbar-track {
+  background: #21262d;              /* 轨道提亮，明显看出"这里能拖" */
+  border-left: 1px solid #30363d;   /* 左边缘线，把轨道"框"出来 */
+}
+#list::-webkit-scrollbar-thumb, #content::-webkit-scrollbar-thumb {
+  background: #8b949e;              /* 亮灰，和深色背景对比明显 */
+  border: 3px solid #21262d;        /* 用轨道色做边框，内缩成胶囊形 */
+  border-radius: 999px;
+  min-height: 48px;                 /* 太短不好抓 */
+}
+#list::-webkit-scrollbar-thumb:hover, #content::-webkit-scrollbar-thumb:hover {
+  background: #c9d1d9;
+}
+#list::-webkit-scrollbar-thumb:active, #content::-webkit-scrollbar-thumb:active {
+  background: var(--accent);        /* 拖动中变蓝，给反馈 */
+}
 
 ul.plain { list-style: none; margin: 0; padding: 0; }
 
