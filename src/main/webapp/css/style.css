@@ -35,14 +35,19 @@
    不设的话 width:100% 再加 padding 就会撑出容器。 */
 * { box-sizing: border-box; }
 
+/* 【双栏独立滚动】前提：先把视口高度锁死，页面本身不再整体滚动。
+   不锁高度的话，内容一长就是"整页一起滚"，左右两栏没法各滚各的。 */
+html, body { height: 100%; }
+
 body {
   margin: 0;                    /* 浏览器默认给 body 8px 外边距，去掉 */
   background: var(--bg);
   color: var(--text);
   font: 15px/1.7 system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
+  overflow: hidden;             /* 滚动交给 main 里的左右两栏 */
 }
 
-.wrap { display: flex; flex-direction: column; min-height: 100vh; }
+.wrap { display: flex; flex-direction: column; height: 100vh; min-height: 0; }
 
 /* ========== 顶部 ========== */
 header {
@@ -108,16 +113,45 @@ button.primary:hover { background: var(--green-2); }
 }
 #cats .tips { margin-left: auto; }   /* 统计文字推到最右边 */
 
-/* ========== 主体：左右两栏 ========== */
+/* ========== 主体：左右两栏（各自独立滚动） ========== */
 main {
   display: flex;
   gap: 16px;
-  padding: 14px 18px 30px;
-  align-items: flex-start;
+  padding: 14px 18px 0;
+  align-items: stretch;        /* 两栏都拉满高度，才谈得上"各自滚动" */
   flex: 1;
+  min-height: 0;               /* 关键：不写它，内容会把 main 撑高，滚动条又跑到整页上 */
+  overflow: hidden;
 }
-#list { flex: 0 0 340px; list-style: none; margin: 0; padding: 0; }
-#content { flex: 1; min-width: 0; }
+
+/* 左栏：定宽 + 自己的纵向滚动条 */
+#list {
+  flex: 0 0 340px;
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 18px 0;       /* 右边留 8px，滚动条不压字 */
+  overflow-y: auto;
+  overscroll-behavior: contain; /* 滚到尽头不把滚动"传染"给页面 */
+}
+
+/* 右栏：占满剩余宽度 + 自己的纵向滚动条 */
+#content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding-bottom: 24px;
+  overscroll-behavior: contain;
+}
+
+/* 暗色细滚动条（Firefox / Chrome 各一套写法） */
+#list, #content { scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
+#list::-webkit-scrollbar, #content::-webkit-scrollbar { width: 8px; }
+#list::-webkit-scrollbar-track, #content::-webkit-scrollbar-track { background: transparent; }
+#list::-webkit-scrollbar-thumb, #content::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 4px;
+}
+#list::-webkit-scrollbar-thumb:hover, #content::-webkit-scrollbar-thumb:hover { background: #484f58; }
 
 ul.plain { list-style: none; margin: 0; padding: 0; }
 
@@ -237,10 +271,21 @@ mark { background: var(--yellow); color: var(--bg); padding: 0 2px; border-radiu
 
 /* ============================================================================
    响应式：屏幕窄于 900px 时，左右两栏改成上下排列
+   手机上没有"左右分栏"，双滚动条会互相打架 —— 恢复成整页滚动
    ========================================================================== */
 @media (max-width: 900px) {
-  main { flex-direction: column; }
-  #list { flex: 1 1 auto; width: 100%; }
+  html, body { height: auto; }
+  body { overflow: auto; }
+  .wrap { height: auto; min-height: 100vh; }
+  main { flex-direction: column; overflow: visible; padding-bottom: 30px; }
+  #list {
+    flex: 1 1 auto;
+    width: 100%;
+    overflow: visible;
+    padding-right: 0;
+    padding-bottom: 0;
+  }
+  #content { overflow: visible; padding-bottom: 0; }
 }
 
 /* ============================================================================

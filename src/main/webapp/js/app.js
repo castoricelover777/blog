@@ -199,7 +199,21 @@ export function createBlogApp(options = {}) {
       collapsed.value = { ...collapsed.value, [key]: !collapsed.value[key] };
     }
 
-    function openNote(id) { currentId.value = id; }
+    /**
+     * 打开一条笔记。
+     * 左右两栏现在各自独立滚动，右栏会记住上一次的滚动位置；
+     * 所以切笔记时把它拉回顶部，否则点开新笔记会停在半中间。
+     */
+    function openNote(id) {
+      currentId.value = id;
+      const raf = (typeof requestAnimationFrame === 'function')
+        ? requestAnimationFrame
+        : (fn) => setTimeout(fn, 0);
+      raf(() => {
+        const el = document.getElementById('content');
+        if (el) el.scrollTop = 0;
+      });
+    }
 
     function openAdd() {
       if (!canEdit.value) {
